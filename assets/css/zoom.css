@@ -1,0 +1,219 @@
+/* OpenSeaDragon Zoom Viewer Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #111;
+    --text: #fafafa;
+    --text-muted: #888;
+    --accent: #4a9eff;
+    --overlay-bg: rgba(0, 0, 0, 0.7);
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* Main viewer container */
+#osd-viewer {
+    width: 100vw;
+    height: 100vh;
+    background: var(--bg);
+}
+
+/* Controls overlay */
+.zoom-controls {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(to bottom, var(--overlay-bg), transparent);
+    z-index: 100;
+    transition: opacity 0.3s ease;
+}
+
+.zoom-controls.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.back-btn {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 1rem;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    transition: background 0.2s;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.artwork-info {
+    text-align: center;
+    color: var(--text);
+}
+
+.artwork-info .title {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+.artwork-info .artist {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.zoom-hint {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.zoom-hint .desktop {
+    display: inline;
+}
+
+.zoom-hint .mobile {
+    display: none;
+}
+
+/* Dimension badge */
+.dimension-badge {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: var(--overlay-bg);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    border-radius: 4px;
+    z-index: 100;
+    transition: opacity 0.3s ease;
+}
+
+.dimension-badge.hidden {
+    opacity: 0;
+}
+
+/* OpenSeaDragon controls styling */
+.openseadragon-container {
+    background: var(--bg) !important;
+}
+
+/* Navigator (mini-map) */
+.navigator {
+    background: var(--bg) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 4px;
+    margin: 10px !important;
+}
+
+/* Error state */
+.error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    color: var(--text);
+    text-align: center;
+    padding: 20px;
+}
+
+.error-container h1 {
+    font-size: 1.5rem;
+    font-weight: normal;
+    margin-bottom: 16px;
+}
+
+.error-container p {
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    max-width: 400px;
+}
+
+.error-container .error {
+    color: #ef4444;
+    font-size: 0.85rem;
+}
+
+.error-container .btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 24px;
+    background: var(--accent);
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    transition: background 0.2s;
+}
+
+.error-container .btn:hover {
+    background: #3a8eef;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+    .zoom-controls {
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+    }
+
+    .back-btn {
+        position: absolute;
+        left: 12px;
+        top: 12px;
+    }
+
+    .artwork-info {
+        margin-top: 40px;
+    }
+
+    .zoom-hint .desktop {
+        display: none;
+    }
+
+    .zoom-hint .mobile {
+        display: inline;
+    }
+
+    .dimension-badge {
+        bottom: 10px;
+        left: 10px;
+        font-size: 0.7rem;
+    }
+}
+
+/* Touch device adjustments */
+@media (hover: none) {
+    .zoom-hint .desktop {
+        display: none;
+    }
+
+    .zoom-hint .mobile {
+        display: inline;
+    }
+}
+
+/* Loading state - shown by OpenSeaDragon */
+.openseadragon-message {
+    color: var(--text-muted) !important;
+    font-family: inherit !important;
+}

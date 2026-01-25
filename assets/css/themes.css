@@ -1,0 +1,352 @@
+/* ============================================
+   PAINTTWITS THEME SYSTEM
+   5 Gallery Themes + Light/Dark variants
+   ============================================ */
+
+/* Default: Minimal (current style) - already in style.css */
+
+/* ============================================
+   THEME 1: GALLERY WHITE
+   Clean museum-style white cube gallery
+   ============================================ */
+[data-gallery-theme="gallery-white"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f8f8;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666;
+    --border-color: #e0e0e0;
+    --accent: #000;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+[data-gallery-theme="gallery-white"] body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+[data-gallery-theme="gallery-white"] .artwork-grid {
+    gap: 40px;
+}
+
+[data-gallery-theme="gallery-white"] .artwork img {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+/* Dark variant */
+@media (prefers-color-scheme: dark) {
+    [data-gallery-theme="gallery-white"]:not([data-theme="light"]) {
+        --bg-primary: #0a0a0a;
+        --bg-secondary: #151515;
+        --text-primary: #f0f0f0;
+        --text-secondary: #999;
+        --border-color: #2a2a2a;
+        --accent: #fff;
+    }
+}
+
+[data-gallery-theme="gallery-white"][data-theme="dark"] {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #151515;
+    --text-primary: #f0f0f0;
+    --text-secondary: #999;
+    --border-color: #2a2a2a;
+    --accent: #fff;
+}
+
+/* ============================================
+   THEME 2: DARKROOM
+   Photography portfolio - dark, dramatic
+   ============================================ */
+[data-gallery-theme="darkroom"] {
+    --bg-primary: #0d0d0d;
+    --bg-secondary: #1a1a1a;
+    --text-primary: #e5e5e5;
+    --text-secondary: #888;
+    --border-color: #333;
+    --accent: #ff4444;
+    font-family: "SF Mono", Monaco, "Courier New", monospace;
+}
+
+[data-gallery-theme="darkroom"] body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+[data-gallery-theme="darkroom"] h1,
+[data-gallery-theme="darkroom"] h2 {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 300;
+}
+
+[data-gallery-theme="darkroom"] .artwork img {
+    border: 1px solid var(--border-color);
+}
+
+/* Light variant */
+[data-gallery-theme="darkroom"][data-theme="light"] {
+    --bg-primary: #fafafa;
+    --bg-secondary: #f0f0f0;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666;
+    --border-color: #ddd;
+}
+
+/* ============================================
+   THEME 3: EDITORIAL
+   Magazine/editorial style with serif fonts
+   ============================================ */
+[data-gallery-theme="editorial"] {
+    --bg-primary: #f9f7f4;
+    --bg-secondary: #f0ebe4;
+    --text-primary: #2c2c2c;
+    --text-secondary: #6b6b6b;
+    --border-color: #d4cfc7;
+    --accent: #8b4513;
+    font-family: Georgia, "Times New Roman", serif;
+}
+
+[data-gallery-theme="editorial"] body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.8;
+}
+
+[data-gallery-theme="editorial"] h1 {
+    font-style: italic;
+    font-weight: normal;
+}
+
+[data-gallery-theme="editorial"] h2 {
+    text-transform: none;
+    font-size: 1.3rem;
+    border-bottom: none;
+}
+
+[data-gallery-theme="editorial"] .artwork-info .title {
+    font-style: italic;
+}
+
+/* Dark variant */
+@media (prefers-color-scheme: dark) {
+    [data-gallery-theme="editorial"]:not([data-theme="light"]) {
+        --bg-primary: #1a1915;
+        --bg-secondary: #252320;
+        --text-primary: #e8e4dc;
+        --text-secondary: #a09a90;
+        --border-color: #3a3830;
+        --accent: #d4a574;
+    }
+}
+
+[data-gallery-theme="editorial"][data-theme="dark"] {
+    --bg-primary: #1a1915;
+    --bg-secondary: #252320;
+    --text-primary: #e8e4dc;
+    --text-secondary: #a09a90;
+    --border-color: #3a3830;
+    --accent: #d4a574;
+}
+
+/* ============================================
+   THEME 4: BRUTALIST
+   Raw, minimal, no-frills brutalist design
+   ============================================ */
+[data-gallery-theme="brutalist"] {
+    --bg-primary: #fff;
+    --bg-secondary: #fff;
+    --text-primary: #000;
+    --text-secondary: #000;
+    --border-color: #000;
+    --accent: #000;
+    font-family: "Arial Black", Arial, sans-serif;
+}
+
+[data-gallery-theme="brutalist"] body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    max-width: 100%;
+    padding: 20px;
+}
+
+[data-gallery-theme="brutalist"] h1 {
+    font-size: 3rem;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    border-bottom: 4px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+[data-gallery-theme="brutalist"] h2 {
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    border-bottom: 2px solid var(--border-color);
+}
+
+[data-gallery-theme="brutalist"] .artwork {
+    border: 2px solid var(--border-color);
+}
+
+[data-gallery-theme="brutalist"] nav {
+    border-width: 2px;
+}
+
+/* Dark variant */
+@media (prefers-color-scheme: dark) {
+    [data-gallery-theme="brutalist"]:not([data-theme="light"]) {
+        --bg-primary: #000;
+        --text-primary: #fff;
+        --border-color: #fff;
+        --accent: #fff;
+    }
+}
+
+[data-gallery-theme="brutalist"][data-theme="dark"] {
+    --bg-primary: #000;
+    --text-primary: #fff;
+    --border-color: #fff;
+    --accent: #fff;
+}
+
+/* ============================================
+   THEME 5: SOFT
+   Soft, friendly, rounded corners
+   ============================================ */
+[data-gallery-theme="soft"] {
+    --bg-primary: #fefefe;
+    --bg-secondary: #f5f5f7;
+    --text-primary: #333;
+    --text-secondary: #777;
+    --border-color: #e8e8e8;
+    --accent: #6366f1;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+[data-gallery-theme="soft"] body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+[data-gallery-theme="soft"] h1 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+[data-gallery-theme="soft"] h2 {
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    padding: 0.75rem 1rem;
+    border: none;
+}
+
+[data-gallery-theme="soft"] .artwork {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+[data-gallery-theme="soft"] .artwork img {
+    border-radius: 8px;
+}
+
+[data-gallery-theme="soft"] nav {
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    border: none;
+    padding: 1rem 1.5rem;
+}
+
+[data-gallery-theme="soft"] .btn-login,
+[data-gallery-theme="soft"] button {
+    border-radius: 8px;
+}
+
+/* Dark variant */
+@media (prefers-color-scheme: dark) {
+    [data-gallery-theme="soft"]:not([data-theme="light"]) {
+        --bg-primary: #1c1c1e;
+        --bg-secondary: #2c2c2e;
+        --text-primary: #f5f5f7;
+        --text-secondary: #a1a1a6;
+        --border-color: #3a3a3c;
+        --accent: #818cf8;
+    }
+}
+
+[data-gallery-theme="soft"][data-theme="dark"] {
+    --bg-primary: #1c1c1e;
+    --bg-secondary: #2c2c2e;
+    --text-primary: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --border-color: #3a3a3c;
+    --accent: #818cf8;
+}
+
+/* ============================================
+   SHARED THEME UTILITIES
+   ============================================ */
+
+/* Theme selector in settings */
+.theme-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 1rem 0;
+}
+
+.theme-option {
+    padding: 1rem;
+    border: 2px solid var(--border-color, #ddd);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.theme-option:hover {
+    border-color: var(--accent, #333);
+}
+
+.theme-option.active {
+    border-color: var(--accent, #333);
+    background: var(--bg-secondary, #f5f5f5);
+}
+
+.theme-option-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.theme-option-preview {
+    width: 100%;
+    height: 40px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+/* Preview swatches for each theme */
+.theme-option[data-theme-preview="minimal"] .theme-option-preview {
+    background: linear-gradient(to right, #fafafa 50%, #111 50%);
+}
+
+.theme-option[data-theme-preview="gallery-white"] .theme-option-preview {
+    background: linear-gradient(to right, #fff 50%, #0a0a0a 50%);
+}
+
+.theme-option[data-theme-preview="darkroom"] .theme-option-preview {
+    background: linear-gradient(to right, #0d0d0d 70%, #ff4444 30%);
+}
+
+.theme-option[data-theme-preview="editorial"] .theme-option-preview {
+    background: linear-gradient(to right, #f9f7f4 50%, #1a1915 50%);
+}
+
+.theme-option[data-theme-preview="brutalist"] .theme-option-preview {
+    background: linear-gradient(to right, #fff 49%, #000 49%, #000 51%, #fff 51%);
+}
+
+.theme-option[data-theme-preview="soft"] .theme-option-preview {
+    background: linear-gradient(to right, #fefefe 50%, #1c1c1e 50%);
+    border-radius: 8px;
+}

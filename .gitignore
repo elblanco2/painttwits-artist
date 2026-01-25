@@ -1,0 +1,27 @@
+# Configuration (contains credentials)
+artist_config.php
+
+# Uploads
+uploads/
+!uploads/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# Deep zoom tiles
+dzi/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PHP
+vendor/
+composer.lock
