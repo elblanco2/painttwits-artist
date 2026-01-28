@@ -17,6 +17,14 @@
     Require all denied
 </FilesMatch>
 
+# Block setup.php if config already exists (setup complete)
+# Artists can manually delete setup.php after installation
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_URI} ^/setup\.php$
+    RewriteCond %{DOCUMENT_ROOT}/artist_config.php -f
+    RewriteRule ^ - [F,L]
+</IfModule>
+
 # Block access to logs directory
 <IfModule mod_rewrite.c>
     RewriteEngine On
