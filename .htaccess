@@ -1,0 +1,35 @@
+# Artist Portfolio - Apache Configuration
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Protect sensitive files
+<FilesMatch "\.(log|sql)$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "^(artist_config\.php|artwork_meta\.json)$">
+    Require all denied
+</FilesMatch>
+
+# Block access to logs directory
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^logs/ - [F,L]
+</IfModule>
+
+# Block directory browsing
+Options -Indexes
+
+# PHP settings (if allowed by host)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 50M
+    php_value post_max_size 52M
+    php_value max_execution_time 120
+    php_value memory_limit 256M
+</IfModule>

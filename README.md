@@ -40,40 +40,45 @@ This template gives you a professional artist portfolio with deep zoom viewing, 
 
 ## Quick Deploy (5 Minutes)
 
-### Option 1: Download ZIP
+### Step 1: Download & Upload
 
-1. Download this folder as ZIP
-2. Upload contents to your web hosting (via cPanel File Manager or FTP)
-3. Copy `artist_config.sample.php` to `artist_config.php`
-4. Edit `artist_config.php` with your details
-5. Visit your site!
+**Option A: Download ZIP**
+1. [Download ZIP](https://github.com/elblanco2/artist-portfolio/archive/main.zip)
+2. Extract and upload contents to your web hosting (via cPanel File Manager or FTP)
 
-### Option 2: Git Clone
-
+**Option B: Git Clone**
 ```bash
-# On your local machine or via SSH
-git clone https://github.com/yourusername/painttwits.git
-cd painttwits/templates/artist-portfolio
-
-# Copy to your web root
-cp -r * /path/to/your/public_html/
-
-# Configure
-cp artist_config.sample.php artist_config.php
-nano artist_config.php  # Edit with your details
+git clone https://github.com/elblanco2/artist-portfolio.git
+# Upload contents to your web hosting
 ```
 
-### Option 3: One-Line Deploy Script
-
+**Option C: One-Line Deploy (SSH)**
 ```bash
-curl -sSL https://painttwits.com/deploy.sh | bash -s -- /path/to/public_html
+bash <(curl -sSL https://raw.githubusercontent.com/elblanco2/artist-portfolio/main/deploy.sh) /path/to/public_html
 ```
+
+### Step 2: Run Setup Wizard
+
+Open your browser and visit:
+```
+https://YOUR-DOMAIN.COM/setup.php
+```
+
+The setup wizard will:
+- Ask for your name and email
+- Configure your gallery automatically
+- Optionally connect you to the painttwits network for discovery
+
+**That's it!** No config files to edit manually.
 
 ---
 
-## Configuration
+## Manual Configuration (Alternative)
 
-Edit `artist_config.php`:
+If you prefer to configure manually instead of using the setup wizard:
+
+1. Copy `artist_config.sample.php` to `artist_config.php`
+2. Edit with your details:
 
 ```php
 <?php
@@ -93,15 +98,10 @@ return [
     'show_prices' => true,       // Show prices on artwork
     'contact_form' => true,      // Enable contact form
     'show_site_badge' => false,  // Hide "powered by" badge
-
-    // === OPTIONAL: Authentication ===
-    // Only needed if you want to upload/edit via the web interface
-    // Without this, you can still upload via FTP or email
-    'oauth' => [
-        'google_client_id' => '',  // Get from Google Cloud Console
-    ],
 ];
 ```
+
+3. Delete `setup.php` after configuration is complete
 
 ---
 
@@ -243,11 +243,13 @@ Typical cost: **$3-10/month** for shared hosting
 
 ---
 
-## Join the Network (Optional)
+## Join the painttwits Network (Optional)
 
 Want your gallery discoverable on painttwits.com?
 
-Add to your config:
+**Easy way:** Check "Join the painttwits network" during setup wizard.
+
+**Manual way:** Add to your config:
 ```php
 'painttwits_network' => [
     'enabled' => true,
@@ -258,6 +260,8 @@ Add to your config:
 Benefits:
 - Appear in location-based artist search
 - Backlink from painttwits.com
+- Shared Google OAuth (no need to set up your own)
+- Video intro tool access
 - Part of curated artist community
 - Keep your own domain
 
