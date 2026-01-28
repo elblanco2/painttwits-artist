@@ -292,19 +292,13 @@ function writeConfig($config) {
     $webroot = __DIR__;
     $above_webroot = dirname($webroot);
 
-    // Try locations in order of preference
+    // Write to webroot - this is where all PHP files load config from.
+    // The .htaccess already blocks direct web access to artist_config.php.
     $locations = [
-        [
-            'path' => $above_webroot . '/artist_config.php',
-            'include_path' => dirname(__DIR__) . '/artist_config.php',
-            'name' => 'above_webroot',
-            'needs_htaccess' => false,
-        ],
         [
             'path' => $webroot . '/artist_config.php',
             'include_path' => __DIR__ . '/artist_config.php',
             'name' => 'webroot',
-            'needs_htaccess' => true,  // Already protected by existing .htaccess
         ],
     ];
 
