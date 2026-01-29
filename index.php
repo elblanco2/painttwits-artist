@@ -266,17 +266,11 @@ $shared_artwork = isset($_GET['art']) ? $_GET['art'] : null;
                     $art_tags = $art['tags'] ?? [];
                 ?>
                 <div class="artwork" data-filename="<?= htmlspecialchars($art['original']) ?>" data-tags="<?= htmlspecialchars(implode(',', $art_tags)) ?>">
-                    <?php if ($is_authenticated): ?>
-                    <img src="uploads/<?= htmlspecialchars($art['filename']) ?>"
-                         alt="<?= htmlspecialchars($art['title']) ?>"
-                         loading="lazy">
-                    <?php else: ?>
                     <a href="/art.php?f=<?= urlencode($art['original']) ?>" class="artwork-link">
                         <img src="uploads/<?= htmlspecialchars($art['filename']) ?>"
                              alt="<?= htmlspecialchars($art['title']) ?>"
                              loading="lazy">
                     </a>
-                    <?php endif; ?>
                     <?php
                     $subtitle_parts = [];
                     if (!empty($art['medium'])) $subtitle_parts[] = htmlspecialchars($art['medium']);
