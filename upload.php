@@ -345,15 +345,24 @@ $syncError = null;
 $syncDebug = [];
 
 if ($artist_id && $api_key) {
+    // Include metadata if available
+    $meta_file = __DIR__ . '/artwork_meta.json';
+    $upload_all_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_file), true) : [];
+    $upload_art_meta = $upload_all_meta[$filename] ?? [];
+
     $syncData = [
         'artist_id' => $artist_id,
         'api_key' => $api_key,
-        'title' => pathinfo($file['name'], PATHINFO_FILENAME),
+        'title' => $upload_art_meta['title'] ?? pathinfo($file['name'], PATHINFO_FILENAME),
         'filename' => $filename,
         'files' => $generatedSizes,
         'original_name' => $file['name'],
         'size' => $file['size'],
-        'mime_type' => $mimeType
+        'mime_type' => $mimeType,
+        'medium' => $upload_art_meta['medium'] ?? '',
+        'dimensions' => $upload_art_meta['dimensions'] ?? '',
+        'price' => $upload_art_meta['price'] ?? '',
+        'description' => $upload_art_meta['description'] ?? ''
     ];
 
     $syncDebug['request_url'] = $painttwits_api . '/sync_artwork.php';

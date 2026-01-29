@@ -58,7 +58,7 @@ if (empty($filename) || strpos($filename, '..') !== false) {
 }
 
 // Allowed fields
-$allowed_fields = ['title', 'status', 'price', 'description', 'tags'];
+$allowed_fields = ['title', 'status', 'price', 'description', 'tags', 'medium', 'dimensions'];
 if (!in_array($field, $allowed_fields)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid field']);
@@ -103,6 +103,28 @@ $metadata[$filename][$field] = $value;
 
 // Save metadata
 if (file_put_contents($metadata_file, json_encode($metadata, JSON_PRETTY_PRINT), LOCK_EX)) {
+    // Best-effort sync to central DB for fields that exist there
+    $config_file = __DIR__ . '/artist_config.php';
+    $config = file_exists($config_file) ? require $config_file : [];
+    $sync_fields = ['title', 'description', 'medium', 'dimensions', 'price'];
+    if (in_array($field, $sync_fields) && !empty($config['central_api']) && !empty($config['api_key'])) {
+        $sync_url = rtrim($config['central_api'], '/') . '/update_artwork_meta.php';
+        $ch = curl_init($sync_url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+            'api_key' => $config['api_key'],
+            'artist_id' => $config['artist_id'] ?? '',
+            'filename' => $filename,
+            'field' => $field,
+            'value' => $value
+        ]));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_exec($ch);
+        curl_close($ch);
+    }
+
     echo json_encode([
         'success' => true,
         'filename' => $filename,

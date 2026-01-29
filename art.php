@@ -5,6 +5,11 @@
  * URL: /art.php?f=filename.jpg or /art.php?f=art_abc123.jpg
  */
 
+session_start();
+require_once __DIR__ . '/security_helpers.php';
+
+$is_authenticated = isset($_SESSION['artist_authenticated']) && $_SESSION['artist_authenticated'];
+
 // Load config (supports both artist_config.php and config.json formats)
 $config_php = __DIR__ . '/artist_config.php';
 $config_json = __DIR__ . '/config.json';
@@ -94,6 +99,14 @@ if (isset($artwork_meta[$filename]['title']) && !empty($artwork_meta[$filename][
     }
 }
 
+// Extract all metadata fields
+$art_meta = $artwork_meta[$filename] ?? [];
+$medium = $art_meta['medium'] ?? '';
+$dimensions = $art_meta['dimensions'] ?? '';
+$price = $art_meta['price'] ?? '';
+$description = $art_meta['description'] ?? '';
+$tags = $art_meta['tags'] ?? [];
+
 // Build meta content
 $og_title = $title . ' by ' . $artist_name;
 $og_description = 'Artwork by ' . $artist_name;
@@ -144,6 +157,9 @@ $next_artwork = ($current_index < count($artworks) - 1) ? $artworks[$current_ind
     <meta name="twitter:description" content="<?= htmlspecialchars($og_description) ?>">
     <meta name="twitter:image" content="<?= htmlspecialchars($og_image) ?>">
     <meta name="twitter:image:alt" content="<?= htmlspecialchars($og_title) ?><?= $site_name ? ' - artwork on ' . htmlspecialchars($site_name) : '' ?>">
+    <?php if ($is_authenticated): ?>
+    <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
+    <?php endif; ?>
 
     <style>
         /* Reset and base - standalone page, don't inherit subdomain styles */
@@ -463,6 +479,108 @@ $next_artwork = ($current_index < count($artworks) - 1) ? $artworks[$current_ind
             height: 16px;
         }
 
+        /* Metadata details */
+        .artwork-details {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin: 0 0 12px 0;
+        }
+        .artwork-details .detail-sep::before {
+            content: '\00b7';
+            margin: 0 8px;
+            color: var(--text-muted);
+        }
+        .artwork-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin: 0 0 16px 0;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.5;
+        }
+        .artwork-tags-display {
+            margin: 0 0 16px 0;
+        }
+        .artwork-tags-display .tag-pill {
+            display: inline-block;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin: 2px;
+            text-decoration: none;
+        }
+
+        /* Editable fields */
+        .editable-field {
+            background: transparent;
+            border: 1px dashed var(--border);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-family: inherit;
+            font-size: inherit;
+            color: var(--text-primary);
+            text-align: center;
+            width: auto;
+        }
+        .editable-field:focus {
+            border-color: var(--accent);
+            outline: none;
+            background: var(--bg-tertiary);
+        }
+        .editable-field::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        input.editable-field {
+            display: inline-block;
+        }
+        textarea.editable-field {
+            display: block;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 60px;
+            resize: vertical;
+            text-align: left;
+        }
+        .edit-meta-row {
+            margin: 8px 0;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .edit-meta-row .detail-sep::before {
+            content: '\00b7';
+            margin: 0 4px;
+            color: var(--text-muted);
+        }
+        .edit-status-row {
+            margin: 8px 0 16px 0;
+        }
+        .edit-status-row select {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+        .save-indicator {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .save-indicator.show {
+            opacity: 1;
+        }
+
         /* Mobile responsive */
         @media (max-width: 480px) {
             .artwork-actions {
@@ -485,8 +603,57 @@ $next_artwork = ($current_index < count($artworks) - 1) ? $artworks[$current_ind
     </div>
 
     <div class="artwork-info">
+        <?php if ($is_authenticated): ?>
+        <!-- Editable view -->
+        <h1><input type="text" class="editable-field" id="edit-title" value="<?= htmlspecialchars($title) ?>" placeholder="Title" data-field="title"></h1>
+        <p class="artist">by <a href="/"><?= htmlspecialchars($artist_name) ?></a></p>
+        <div class="edit-meta-row">
+            <input type="text" class="editable-field" id="edit-medium" value="<?= htmlspecialchars($medium) ?>" placeholder="Medium (e.g. Oil on canvas)" data-field="medium" size="20">
+            <span class="detail-sep"></span>
+            <input type="text" class="editable-field" id="edit-dimensions" value="<?= htmlspecialchars($dimensions) ?>" placeholder="Dimensions (e.g. 24 x 36)" data-field="dimensions" size="16">
+            <span class="detail-sep"></span>
+            <input type="text" class="editable-field" id="edit-price" value="<?= htmlspecialchars($price) ?>" placeholder="Price" data-field="price" size="10">
+        </div>
+        <div style="margin:8px auto;max-width:600px;">
+            <textarea class="editable-field" id="edit-description" placeholder="Description" data-field="description"><?= htmlspecialchars($description) ?></textarea>
+        </div>
+        <div class="edit-meta-row">
+            <input type="text" class="editable-field" id="edit-tags" value="<?= htmlspecialchars(implode(', ', $tags)) ?>" placeholder="Tags (comma separated)" data-field="tags" size="30">
+        </div>
+        <div class="edit-status-row">
+            <select id="edit-status" data-field="status">
+                <option value="available"<?= $artwork_status === 'available' ? ' selected' : '' ?>>&#x1F7E2; Available</option>
+                <option value="sold"<?= $artwork_status === 'sold' ? ' selected' : '' ?>>&#x1F534; Sold</option>
+                <option value="on_display"<?= $artwork_status === 'on_display' ? ' selected' : '' ?>>&#x1F7E0; On Display</option>
+                <option value="pending"<?= $artwork_status === 'pending' ? ' selected' : '' ?>>&#x1F7E1; Pending</option>
+                <option value="not_for_sale"<?= $artwork_status === 'not_for_sale' ? ' selected' : '' ?>>&#x26AA; Not For Sale</option>
+            </select>
+            <span class="save-indicator" id="save-indicator">Saved</span>
+        </div>
+        <?php else: ?>
+        <!-- Public view -->
         <h1><?= htmlspecialchars($title) ?></h1>
         <p class="artist">by <a href="/"><?= htmlspecialchars($artist_name) ?></a></p>
+        <?php
+        $details = [];
+        if (!empty($medium)) $details[] = htmlspecialchars($medium);
+        if (!empty($dimensions)) $details[] = htmlspecialchars($dimensions);
+        if (!empty($price)) $details[] = '$' . htmlspecialchars($price);
+        ?>
+        <?php if (!empty($details)): ?>
+        <p class="artwork-details"><?= implode('<span class="detail-sep"></span>', $details) ?></p>
+        <?php endif; ?>
+        <?php if (!empty($description)): ?>
+        <p class="artwork-description"><?= nl2br(htmlspecialchars($description)) ?></p>
+        <?php endif; ?>
+        <?php if (!empty($tags)): ?>
+        <div class="artwork-tags-display">
+            <?php foreach ($tags as $tag): ?>
+            <span class="tag-pill"><?= htmlspecialchars($tag) ?></span>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+        <?php endif; ?>
 
         <div class="artwork-actions">
             <button class="btn-bluesky" onclick="shareBluesky()">
@@ -515,7 +682,9 @@ $next_artwork = ($current_index < count($artworks) - 1) ? $artworks[$current_ind
                 <svg viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/><path fill="currentColor" d="M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z"/></svg>
                 Explore Details
             </a>
+            <?php if (!$is_authenticated): ?>
             <span class="status-indicator status-<?= htmlspecialchars($artwork_status) ?>" data-label="<?= htmlspecialchars($status_label) ?>"></span>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -640,6 +809,76 @@ $next_artwork = ($current_index < count($artworks) - 1) ? $artworks[$current_ind
                 }
             }
         }
+
+        // Inline metadata editing
+        <?php if ($is_authenticated): ?>
+        (function() {
+            var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+            var saveIndicator = document.getElementById('save-indicator');
+
+            function saveField(field, value) {
+                saveIndicator.textContent = 'Saving...';
+                saveIndicator.classList.add('show');
+                fetch('/update_meta.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: filename, field: field, value: value, csrf_token: csrfToken })
+                }).then(function(r) { return r.json(); }).then(function(data) {
+                    if (data.success) {
+                        saveIndicator.textContent = 'Saved';
+                        setTimeout(function() { saveIndicator.classList.remove('show'); }, 1500);
+                    } else {
+                        saveIndicator.textContent = 'Error';
+                        setTimeout(function() { saveIndicator.classList.remove('show'); }, 2000);
+                    }
+                }).catch(function() {
+                    saveIndicator.textContent = 'Error';
+                    setTimeout(function() { saveIndicator.classList.remove('show'); }, 2000);
+                });
+            }
+
+            // Text inputs save on blur
+            var fields = ['edit-title', 'edit-medium', 'edit-dimensions', 'edit-price', 'edit-tags'];
+            fields.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                var orig = el.value;
+                el.addEventListener('blur', function() {
+                    if (el.value !== orig) {
+                        saveField(el.dataset.field, el.value);
+                        orig = el.value;
+                        if (el.dataset.field === 'title') {
+                            artworkTitle = el.value;
+                        }
+                    }
+                });
+                el.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+                    if (e.key === 'Escape') { el.value = orig; el.blur(); }
+                });
+            });
+
+            // Textarea saves on blur
+            var descEl = document.getElementById('edit-description');
+            if (descEl) {
+                var origDesc = descEl.value;
+                descEl.addEventListener('blur', function() {
+                    if (descEl.value !== origDesc) {
+                        saveField('description', descEl.value);
+                        origDesc = descEl.value;
+                    }
+                });
+            }
+
+            // Status dropdown saves on change
+            var statusEl = document.getElementById('edit-status');
+            if (statusEl) {
+                statusEl.addEventListener('change', function() {
+                    saveField('status', statusEl.value);
+                });
+            }
+        })();
+        <?php endif; ?>
 
         // Keyboard navigation
         document.addEventListener('keydown', function(e) {

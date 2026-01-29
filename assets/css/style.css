@@ -173,6 +173,13 @@ nav a {
     color: var(--gray);
 }
 
+.artwork-subtitle {
+    display: block;
+    color: var(--gray);
+    font-size: 0.75rem;
+    margin-top: 2px;
+}
+
 .btn-delete {
     background: none;
     border: 1px solid var(--light-gray);

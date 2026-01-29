@@ -66,6 +66,8 @@ if (is_dir($uploads_dir)) {
         $meta = $artwork_meta[$basename] ?? [];
         $title = $meta['title'] ?? preg_replace('/^art_[a-f0-9.]+$/', 'Untitled', $name);
         $tags = $meta['tags'] ?? [];
+        $medium = $meta['medium'] ?? '';
+        $dimensions = $meta['dimensions'] ?? '';
 
         // Collect tags for filter
         foreach ($tags as $tag) {
@@ -79,7 +81,9 @@ if (is_dir($uploads_dir)) {
             'original' => $basename,
             'title' => $title,
             'tags' => $tags,
-            'status' => $meta['status'] ?? 'available'
+            'status' => $meta['status'] ?? 'available',
+            'medium' => $medium,
+            'dimensions' => $dimensions
         ];
     }
 }
@@ -273,9 +277,16 @@ $shared_artwork = isset($_GET['art']) ? $_GET['art'] : null;
                              loading="lazy">
                     </a>
                     <?php endif; ?>
+                    <?php
+                    $subtitle_parts = [];
+                    if (!empty($art['medium'])) $subtitle_parts[] = htmlspecialchars($art['medium']);
+                    if (!empty($art['dimensions'])) $subtitle_parts[] = htmlspecialchars($art['dimensions']);
+                    $subtitle = implode(' &middot; ', $subtitle_parts);
+                    ?>
                     <div class="artwork-info">
                         <?php if ($is_authenticated): ?>
                         <input type="text" class="title editable-title" value="<?= htmlspecialchars($art['title']) ?>" data-filename="<?= htmlspecialchars($art['original']) ?>" placeholder="Untitled">
+                        <?php if ($subtitle): ?><span class="artwork-subtitle"><?= $subtitle ?></span><?php endif; ?>
                         <input type="text" class="editable-tags" value="<?= htmlspecialchars(implode(', ', $art_tags)) ?>" data-filename="<?= htmlspecialchars($art['original']) ?>" placeholder="tags (comma separated)">
                         <select class="status-select" data-filename="<?= htmlspecialchars($art['original']) ?>" onchange="updateStatus(this)">
                             <option value="available"<?= $art['status'] === 'available' ? ' selected' : '' ?>>&#x1F7E2; Available</option>
@@ -286,6 +297,7 @@ $shared_artwork = isset($_GET['art']) ? $_GET['art'] : null;
                         </select>
                         <?php else: ?>
                         <span class="title"><?= htmlspecialchars($art['title']) ?></span>
+                        <?php if ($subtitle): ?><span class="artwork-subtitle"><?= $subtitle ?></span><?php endif; ?>
                         <?php if (!empty($art_tags)): ?>
                         <div class="artwork-tags">
                             <?php foreach ($art_tags as $tag): ?>
