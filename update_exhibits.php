@@ -9,6 +9,49 @@ session_start();
 require_once __DIR__ . '/security_helpers.php';
 header('Content-Type: application/json');
 
+// Load config for hub sync
+$config_file = __DIR__ . '/artist_config.php';
+$_exhibitConfig = file_exists($config_file) ? require $config_file : [];
+
+/**
+ * Best-effort sync exhibit to central painttwits hub
+ */
+function syncExhibitToHub($slug, $exhibit) {
+    global $_exhibitConfig;
+    $api = $_exhibitConfig['central_api'] ?? $_exhibitConfig['painttwits_api'] ?? '';
+    $api_key = $_exhibitConfig['api_key'] ?? '';
+    $artist_id = $_exhibitConfig['artist_id'] ?? '';
+    if (empty($api) || empty($api_key) || empty($artist_id)) return;
+
+    $cover_filename = $exhibit['cover'] ?? ($exhibit['artworks'][0] ?? '');
+    $syncData = [
+        'artist_id' => $artist_id,
+        'api_key' => $api_key,
+        'slug' => $slug,
+        'title' => $exhibit['title'] ?? '',
+        'description' => $exhibit['description'] ?? '',
+        'cover_filename' => $cover_filename,
+        'artwork_filenames' => $exhibit['artworks'] ?? [],
+        'exhibit_type' => $exhibit['type'] ?? 'solo',
+        'duration' => $exhibit['duration'] ?? 'temporary',
+        'start_date' => $exhibit['start_date'] ?? null,
+        'end_date' => $exhibit['end_date'] ?? null,
+        'opening_reception' => $exhibit['opening_reception'] ?? null,
+        'venue' => $exhibit['venue'] ?? '',
+        'press_release' => $exhibit['press_release'] ?? '',
+        'status' => $exhibit['status'] ?? 'draft'
+    ];
+
+    $ch = curl_init(rtrim($api, '/') . '/sync_exhibit.php');
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($syncData));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_exec($ch);
+    curl_close($ch);
+}
+
 // Check authentication
 if (!isset($_SESSION['artist_authenticated']) || !$_SESSION['artist_authenticated']) {
     http_response_code(401);
@@ -86,6 +129,9 @@ switch ($action) {
         ];
 
         if (file_put_contents($exhibits_file, json_encode($exhibits, JSON_PRETTY_PRINT), LOCK_EX)) {
+            if ($exhibits[$slug]['status'] === 'published') {
+                syncExhibitToHub($slug, $exhibits[$slug]);
+            }
             echo json_encode(['success' => true, 'slug' => $slug, 'exhibit' => $exhibits[$slug]]);
         } else {
             http_response_code(500);
@@ -112,6 +158,9 @@ switch ($action) {
         $exhibits[$slug]['updated_at'] = date('Y-m-d H:i:s');
 
         if (file_put_contents($exhibits_file, json_encode($exhibits, JSON_PRETTY_PRINT), LOCK_EX)) {
+            if ($exhibits[$slug]['status'] === 'published') {
+                syncExhibitToHub($slug, $exhibits[$slug]);
+            }
             echo json_encode(['success' => true, 'slug' => $slug, 'exhibit' => $exhibits[$slug]]);
         } else {
             http_response_code(500);
