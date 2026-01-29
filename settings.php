@@ -754,7 +754,7 @@ function deleteDirectory($dir) {
                            autocomplete="off"
                            required>
 
-                    <button type="submit" class="btn-delete" id="delete-btn">
+                    <button type="submit" id="delete-btn" style="display:inline-block;padding:12px 24px;background:#c00;color:#fff;border-radius:4px;border:none;font-size:16px;cursor:pointer;margin-top:8px;">
                         Delete My Account
                     </button>
                 </form>
@@ -769,14 +769,24 @@ function deleteDirectory($dir) {
             var input = document.getElementById('confirm_subdomain');
             var btn = document.getElementById('delete-btn');
 
+            function updateBtn(matched) {
+                if (matched) {
+                    btn.disabled = false;
+                    btn.style.background = '#c00';
+                    btn.style.color = '#fff';
+                    btn.style.cursor = 'pointer';
+                } else {
+                    btn.disabled = true;
+                    btn.style.background = '#888';
+                    btn.style.color = '#ccc';
+                    btn.style.cursor = 'not-allowed';
+                }
+            }
+
             if (input && btn && expectedConfirm) {
-                // Start disabled, enable when text matches
-                btn.disabled = true;
+                updateBtn(false);
                 input.addEventListener('input', function() {
-                    btn.disabled = input.value.trim().toLowerCase() !== expectedConfirm;
-                });
-                input.addEventListener('keyup', function() {
-                    btn.disabled = input.value.trim().toLowerCase() !== expectedConfirm;
+                    updateBtn(input.value.trim().toLowerCase() === expectedConfirm);
                 });
             }
         })();
