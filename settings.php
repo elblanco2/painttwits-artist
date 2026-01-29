@@ -75,28 +75,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if (!$csrf || !isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
         $delete_error = 'Invalid or expired form token. Please try again.';
     } elseif ($_POST['action'] === 'delete_account') {
-        $confirm_subdomain = trim($_POST['confirm_subdomain'] ?? '');
+        $confirm_input = trim($_POST['confirm_subdomain'] ?? '');
+        $confirm_text = $subdomain ?: ($config['site_domain'] ?? $config['email'] ?? '');
 
         // Verify confirmation matches
-        if (strtolower($confirm_subdomain) !== strtolower($subdomain)) {
-            $delete_error = 'Subdomain name does not match. Please type it exactly.';
+        if (strtolower($confirm_input) !== strtolower($confirm_text)) {
+            $delete_error = 'Confirmation text does not match. Please type it exactly.';
         } else {
-            // Attempt deletion
+            // Step 1: Notify central API (if connected to painttwits network)
             if (!empty($central_api) && !empty($api_key)) {
-                // Hosted on painttwits.com - call central API
-                $result = deleteViaCentralApi($central_api, $api_key, $subdomain);
-                if ($result['success']) {
-                    $delete_success = true;
-                } else {
-                    $delete_error = $result['error'] ?? 'Failed to delete account. Please contact support.';
+                $artist_id_val = $config['artist_id'] ?? '';
+                $result = deleteViaCentralApi($central_api, $api_key, $artist_id_val);
+                if (!$result['success']) {
+                    $delete_error = $result['error'] ?? 'Failed to delete from central server.';
                 }
-            } else {
-                // Self-hosted - do local deletion
-                $result = deleteLocalAccount($subdomain);
+            }
+
+            // Step 2: Local cleanup (always, even if central fails — artist wants out)
+            if (empty($delete_error)) {
+                $result = deleteLocalAccount();
                 if ($result['success']) {
                     $delete_success = true;
                 } else {
-                    $delete_error = $result['error'] ?? 'Failed to delete account.';
+                    $delete_error = $result['error'] ?? 'Failed to delete local account.';
                 }
             }
 
@@ -113,15 +114,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 /**
  * Delete via central painttwits API
  */
-function deleteViaCentralApi($api_url, $api_key, $subdomain) {
+function deleteViaCentralApi($api_url, $api_key, $artist_id) {
     $url = rtrim($api_url, '/') . '/artist/delete.php';
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
         'api_key' => $api_key,
-        'subdomain' => $subdomain,
-        'confirm' => true
+        'artist_id' => $artist_id,
+        'confirm' => true,
     ]));
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -142,10 +143,10 @@ function deleteViaCentralApi($api_url, $api_key, $subdomain) {
 /**
  * Delete local self-hosted account
  */
-function deleteLocalAccount($subdomain) {
-    // For self-hosted, just clear the uploads and config
+function deleteLocalAccount() {
     $uploads_dir = __DIR__ . '/uploads';
     $config_file = __DIR__ . '/artist_config.php';
+    $meta_file = __DIR__ . '/artwork_meta.json';
 
     try {
         // Delete all uploads
@@ -155,20 +156,22 @@ function deleteLocalAccount($subdomain) {
                 if (is_file($file)) {
                     unlink($file);
                 } elseif (is_dir($file)) {
-                    // Recursively delete DZI directories
                     deleteDirectory($file);
                 }
             }
         }
 
-        // Clear config (but keep the file so site doesn't break)
+        // Delete artwork metadata
+        if (file_exists($meta_file)) {
+            unlink($meta_file);
+        }
+
+        // Clear config (keep file so site shows "deleted" state)
         if (file_exists($config_file)) {
-            // Backup original name for reference
             $config = require $config_file;
             file_put_contents(__DIR__ . '/deleted_' . date('Y-m-d_His') . '.txt',
-                'Account deleted: ' . ($config['name'] ?? 'Unknown') . ' (' . $subdomain . ')');
+                'Account deleted: ' . ($config['name'] ?? 'Unknown') . ' (' . ($config['site_domain'] ?? '') . ')');
 
-            // Reset config to empty state
             $emptyConfig = "<?php\nreturn [\n    'name' => 'Deleted Account',\n    'email' => '',\n    'deleted' => true,\n    'deleted_at' => '" . date('Y-m-d H:i:s') . "'\n];\n";
             file_put_contents($config_file, $emptyConfig);
         }
@@ -710,11 +713,17 @@ function deleteDirectory($dir) {
 
         <!-- Danger Zone -->
         <div class="settings-section">
+            <?php $confirm_text = $subdomain ?: ($config['site_domain'] ?? $config['email'] ?? ''); ?>
             <div class="danger-zone">
                 <h2>Delete Account</h2>
                 <p>
                     Permanently delete your account and all artwork. This action cannot be undone.
-                    Your subdomain will be released and all uploaded images will be deleted.
+                    All uploaded images will be deleted and your account will be removed from the painttwits network.
+                </p>
+
+                <p style="margin-bottom:16px;">
+                    <a href="/api/export.php" class="btn-export" style="display:inline-block;padding:8px 16px;background:#2563eb;color:#fff;border-radius:4px;text-decoration:none;font-size:14px;">Download All Artwork (ZIP)</a>
+                    <span style="color:#666;font-size:13px;margin-left:8px;">Recommended before deleting</span>
                 </p>
 
                 <?php if ($delete_error): ?>
@@ -726,12 +735,12 @@ function deleteDirectory($dir) {
                     <?= csrf_field() ?>
 
                     <label for="confirm_subdomain">
-                        Type <strong><?= htmlspecialchars($subdomain ?: 'your subdomain') ?></strong> to confirm:
+                        Type <strong><?= htmlspecialchars($confirm_text) ?></strong> to confirm:
                     </label>
                     <input type="text"
                            id="confirm_subdomain"
                            name="confirm_subdomain"
-                           placeholder="<?= htmlspecialchars($subdomain) ?>"
+                           placeholder="<?= htmlspecialchars($confirm_text) ?>"
                            autocomplete="off"
                            required>
 
@@ -745,16 +754,16 @@ function deleteDirectory($dir) {
 
     <script src="assets/js/theme.js"></script>
     <script>
-        var expectedSubdomain = '<?= addslashes(strtolower($subdomain)) ?>';
+        var expectedConfirm = '<?= addslashes(strtolower($confirm_text)) ?>';
         var input = document.getElementById('confirm_subdomain');
         var btn = document.getElementById('delete-btn');
 
         input.addEventListener('input', function() {
-            btn.disabled = input.value.toLowerCase() !== expectedSubdomain;
+            btn.disabled = input.value.toLowerCase() !== expectedConfirm;
         });
 
         function confirmDelete() {
-            return confirm('Are you absolutely sure you want to delete your account?\n\nThis will permanently delete:\n- All your uploaded artwork\n- Your subdomain (' + expectedSubdomain + ')\n- Your account and profile\n\nThis cannot be undone!');
+            return confirm('Are you absolutely sure you want to delete your account?\n\nThis will permanently delete:\n- All your uploaded artwork\n- Your gallery and profile\n- Your connection to the painttwits network\n\nThis cannot be undone!');
         }
 
         // Initialize theme selection
@@ -950,7 +959,7 @@ function deleteDirectory($dir) {
             fetch('/api/location.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get' })
+                body: JSON.stringify({ action: 'get' }
             })
             .then(function(r) { return r.json(); })
             .then(function(res) {
