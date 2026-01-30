@@ -631,7 +631,9 @@ $nav_suffix = $in_exhibit ? '&exhibit=' . urlencode($exhibit_slug) : '';
 </head>
 <body class="artwork-page">
     <div class="artwork-hero">
-        <img src="<?= htmlspecialchars($image_url) ?>" alt="<?= htmlspecialchars($title) ?> by <?= htmlspecialchars($artist_name) ?>">
+        <a href="/zoom.php?f=<?= urlencode($filename) ?><?= $nav_suffix ?>" title="Zoom in to full detail" style="display:block;cursor:zoom-in;">
+            <img src="<?= htmlspecialchars($image_url) ?>" alt="<?= htmlspecialchars($title) ?> by <?= htmlspecialchars($artist_name) ?>">
+        </a>
     </div>
 
     <div class="artwork-info">
@@ -710,9 +712,9 @@ $nav_suffix = $in_exhibit ? '&exhibit=' . urlencode($exhibit_slug) : '';
                 Create Video
             </button>
             <?php endif; ?>
-            <a href="/zoom.php?f=<?= urlencode($filename) ?>" class="btn-zoom">
+            <a href="/zoom.php?f=<?= urlencode($filename) ?><?= $nav_suffix ?>" class="btn-zoom">
                 <svg viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/><path fill="currentColor" d="M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z"/></svg>
-                Explore Details
+                Zoom In
             </a>
             <?php if (!$is_authenticated): ?>
             <span class="status-indicator status-<?= htmlspecialchars($artwork_status) ?>" data-label="<?= htmlspecialchars($status_label) ?>"></span>

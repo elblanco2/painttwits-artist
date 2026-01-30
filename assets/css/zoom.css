@@ -29,7 +29,17 @@ html, body {
     background: var(--bg);
 }
 
-/* Controls overlay */
+/* All overlay elements share hidden transition */
+.zoom-overlay {
+    transition: opacity 0.3s ease;
+}
+
+.zoom-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Top controls bar */
 .zoom-controls {
     position: fixed;
     top: 0;
@@ -41,22 +51,17 @@ html, body {
     padding: 16px 20px;
     background: linear-gradient(to bottom, var(--overlay-bg), transparent);
     z-index: 100;
-    transition: opacity 0.3s ease;
-}
-
-.zoom-controls.hidden {
-    opacity: 0;
-    pointer-events: none;
 }
 
 .back-btn {
     color: var(--text);
     text-decoration: none;
-    font-size: 1rem;
+    font-size: 0.9rem;
     padding: 8px 16px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     transition: background 0.2s;
+    white-space: nowrap;
 }
 
 .back-btn:hover {
@@ -93,22 +98,136 @@ html, body {
     display: none;
 }
 
-/* Dimension badge */
-.dimension-badge {
+/* Prev/Next navigation arrows */
+.nav-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 3rem;
+    line-height: 1;
+    padding: 20px 16px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    transition: opacity 0.3s ease, background 0.2s;
+}
+
+.nav-arrow:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.nav-prev {
+    left: 12px;
+}
+
+.nav-next {
+    right: 12px;
+}
+
+/* Bottom-left info + share panel */
+.info-panel {
     position: fixed;
     bottom: 20px;
     left: 20px;
+    z-index: 100;
+    max-width: 320px;
+}
+
+.info-meta {
+    color: var(--text);
+    font-size: 0.8rem;
+    padding: 6px 10px;
+    background: var(--overlay-bg);
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.info-status {
+    display: inline-block;
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 3px;
+    margin-bottom: 6px;
+}
+
+.info-status.status-sold { background: #fee2e2; color: #991b1b; }
+.info-status.status-on_display { background: #dbeafe; color: #1e40af; }
+.info-status.status-pending { background: #fef3c7; color: #92400e; }
+.info-status.status-not_for_sale { background: #f3f4f6; color: #4b5563; }
+
+.share-row {
+    display: flex;
+    gap: 6px;
+}
+
+.share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.share-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.info-exhibit {
+    display: block;
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-decoration: none;
+    padding: 4px 10px;
+    background: var(--overlay-bg);
+    border-radius: 4px;
+    transition: color 0.2s;
+}
+
+.info-exhibit:hover {
+    color: var(--text);
+}
+
+/* Dimension badge (bottom-right) */
+.dimension-badge {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
     background: var(--overlay-bg);
     color: var(--text-muted);
     font-size: 0.75rem;
     padding: 6px 12px;
     border-radius: 4px;
     z-index: 100;
-    transition: opacity 0.3s ease;
 }
 
-.dimension-badge.hidden {
+/* Toast notification */
+.zoom-toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    z-index: 200;
     opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.zoom-toast.show {
+    opacity: 1;
 }
 
 /* OpenSeaDragon controls styling */
@@ -194,10 +313,29 @@ html, body {
         display: inline;
     }
 
-    .dimension-badge {
+    .nav-arrow {
+        font-size: 2rem;
+        padding: 16px 10px;
+    }
+
+    .nav-prev { left: 4px; }
+    .nav-next { right: 4px; }
+
+    .info-panel {
         bottom: 10px;
         left: 10px;
+        max-width: 260px;
+    }
+
+    .dimension-badge {
+        bottom: 10px;
+        right: 10px;
         font-size: 0.7rem;
+    }
+
+    .share-btn {
+        width: 32px;
+        height: 32px;
     }
 }
 
