@@ -135,6 +135,7 @@ $shared_artwork = isset($_GET['art']) ? $_GET['art'] : null;
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <?php include __DIR__ . '/analytics.php'; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php if (!empty($_SESSION['artist_authenticated'])): ?>

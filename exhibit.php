@@ -144,6 +144,7 @@ $artwork_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_fi
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <?php include __DIR__ . '/analytics.php'; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($og_title) ?></title>

@@ -57,6 +57,9 @@ return [
     'contact_form' => true,
     'show_site_badge' => true,                // Show "powered by" badge in footer
 
+    // Google Analytics 4 — your own measurement ID (optional, platform GA is always included)
+    'google_analytics_id' => '',              // e.g., 'G-XXXXXXXXXX'
+
     // =========================================
     // PAINTTWITS NETWORK (Optional)
     // =========================================

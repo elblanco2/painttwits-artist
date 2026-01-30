@@ -74,6 +74,7 @@ $imageHeight = $imageInfo[1] ?? 0;
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <?php include __DIR__ . '/analytics.php'; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title><?= htmlspecialchars($title) ?> - Detail View | <?= htmlspecialchars($artist_name) ?></title>

@@ -205,6 +205,7 @@ function deleteDirectory($dir) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <?php include __DIR__ . '/analytics.php'; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - <?= htmlspecialchars($artist_name) ?></title>
@@ -1068,7 +1069,7 @@ function deleteDirectory($dir) {
             fetch('/api/location.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get' }
+                body: JSON.stringify({ action: 'get' })
             })
             .then(function(r) { return r.json(); })
             .then(function(res) {
