@@ -38,6 +38,8 @@ function syncExhibitToHub($slug, $exhibit) {
         'end_date' => $exhibit['end_date'] ?? null,
         'opening_reception' => $exhibit['opening_reception'] ?? null,
         'venue' => $exhibit['venue'] ?? '',
+        'venue_lat' => $exhibit['venue_lat'] ?? null,
+        'venue_lng' => $exhibit['venue_lng'] ?? null,
         'press_release' => $exhibit['press_release'] ?? '',
         'status' => $exhibit['status'] ?? 'draft'
     ];
@@ -123,6 +125,8 @@ switch ($action) {
             'end_date' => $input['end_date'] ?? null,
             'opening_reception' => $input['opening_reception'] ?? null,
             'venue' => trim($input['venue'] ?? ''),
+            'venue_lat' => isset($input['venue_lat']) && is_numeric($input['venue_lat']) ? (float)$input['venue_lat'] : null,
+            'venue_lng' => isset($input['venue_lng']) && is_numeric($input['venue_lng']) ? (float)$input['venue_lng'] : null,
             'press_release' => trim($input['press_release'] ?? ''),
             'status' => $input['status'] ?? 'draft',
             'created_at' => date('Y-m-d H:i:s')
@@ -147,11 +151,14 @@ switch ($action) {
             exit;
         }
 
-        $allowed = ['title', 'description', 'cover', 'artworks', 'duration', 'start_date', 'end_date', 'opening_reception', 'venue', 'press_release', 'status'];
+        $allowed = ['title', 'description', 'cover', 'artworks', 'duration', 'start_date', 'end_date', 'opening_reception', 'venue', 'venue_lat', 'venue_lng', 'press_release', 'status'];
         foreach ($allowed as $field) {
             if (array_key_exists($field, $input)) {
                 $val = $input[$field];
                 if (is_string($val)) $val = trim($val);
+                if (($field === 'venue_lat' || $field === 'venue_lng') && $val !== null) {
+                    $val = is_numeric($val) ? (float)$val : null;
+                }
                 $exhibits[$slug][$field] = $val;
             }
         }

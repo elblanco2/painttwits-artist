@@ -63,6 +63,9 @@ $start_date = $exhibit['start_date'] ?? null;
 $end_date = $exhibit['end_date'] ?? null;
 $opening_reception = $exhibit['opening_reception'] ?? null;
 $venue = $exhibit['venue'] ?? '';
+$venue_lat = $exhibit['venue_lat'] ?? null;
+$venue_lng = $exhibit['venue_lng'] ?? null;
+$has_venue_map = $venue_lat && $venue_lng && $duration !== 'permanent';
 $press_release = $exhibit['press_release'] ?? '';
 
 // Filter to only existing files
@@ -145,6 +148,10 @@ $artwork_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_fi
 <html lang="en">
 <head>
     <?php include __DIR__ . '/analytics.php'; ?>
+    <?php if ($has_venue_map): ?>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <?php endif; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($og_title) ?></title>
@@ -304,7 +311,9 @@ $artwork_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_fi
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255,255,255,0.15);
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             color: #fff;
             border: none;
             font-size: 2rem;
@@ -316,18 +325,20 @@ $artwork_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_fi
             align-items: center;
             justify-content: center;
         }
-        .carousel-nav:hover { background: rgba(255,255,255,0.3); }
+        .carousel-nav:hover { background: rgba(0,0,0,0.5); }
         .carousel-nav.prev { left: 0; border-radius: 0 8px 8px 0; }
         .carousel-nav.next { right: 0; border-radius: 8px 0 0 8px; }
         .carousel-counter {
             position: absolute;
             bottom: 12px;
             right: 16px;
-            color: rgba(255,255,255,0.7);
-            font-size: 0.85rem;
-            background: rgba(0,0,0,0.5);
-            padding: 2px 10px;
-            border-radius: 10px;
+            color: #fff;
+            font-size: 0.8rem;
+            background: rgba(0,0,0,0.45);
+            backdrop-filter: blur(4px);
+            padding: 3px 12px;
+            border-radius: 12px;
+            letter-spacing: 0.05em;
         }
 
         /* Thumbnail strip */
@@ -345,15 +356,17 @@ $artwork_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_fi
             height: 60px;
             object-fit: cover;
             cursor: pointer;
-            opacity: 0.5;
-            transition: opacity 0.2s;
+            opacity: 0.6;
+            transition: opacity 0.2s, transform 0.2s, border-color 0.2s;
             border: 2px solid transparent;
+            border-radius: 3px;
             flex-shrink: 0;
         }
-        .thumb-strip img:hover { opacity: 0.8; }
+        .thumb-strip img:hover { opacity: 0.85; transform: scale(1.05); }
         .thumb-strip img.active {
             opacity: 1;
             border-color: var(--accent);
+            border-width: 3px;
         }
 
         /* Artwork info below carousel */
@@ -374,6 +387,85 @@ $artwork_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_fi
             text-decoration: none;
         }
         .artwork-caption .caption-link a:hover { text-decoration: underline; }
+
+        /* Show details collapsible */
+        .show-details-wrap {
+            margin-top: 0.5rem;
+        }
+        .show-details-toggle {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 0.25rem 0;
+        }
+        .show-details-toggle:hover {
+            text-decoration: underline;
+        }
+        .show-details-toggle .arrow {
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+        .show-details-toggle.open .arrow {
+            transform: rotate(180deg);
+        }
+        .show-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, margin 0.4s ease;
+            margin-top: 0;
+        }
+        .show-details.expanded {
+            max-height: 800px;
+            margin-top: 0.5rem;
+        }
+        .venue-map {
+            height: 200px;
+            border-radius: 6px;
+            margin: 0.75rem 0 0.25rem;
+        }
+        .directions-link {
+            display: inline-block;
+            font-size: 0.8rem;
+            color: var(--accent);
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+        }
+        .directions-link:hover { text-decoration: underline; }
+
+        /* About / description (below artwork) */
+        .exhibit-about {
+            max-width: 700px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+            text-align: center;
+        }
+        .exhibit-about-text {
+            color: var(--text2);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            max-height: 4.2em;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        .exhibit-about-text.expanded {
+            max-height: 2000px;
+        }
+        .read-more-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 0.5rem 0;
+            display: none;
+        }
+        .read-more-btn:hover {
+            text-decoration: underline;
+        }
 
         /* Press release */
         .press-release {
@@ -458,27 +550,36 @@ $artwork_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_fi
     <div class="exhibit-header">
         <h1><?= htmlspecialchars($title) ?></h1>
         <p class="artist">by <a href="/"><?= htmlspecialchars($artist_name) ?></a></p>
-        <?php if ($date_display): ?>
-        <p class="exhibit-date-bar"><?= htmlspecialchars($date_display) ?></p>
-        <?php endif; ?>
-        <?php if ($venue): ?>
-        <p class="exhibit-venue"><?= htmlspecialchars($venue) ?></p>
-        <?php endif; ?>
-        <?php if ($reception_display): ?>
-        <p class="exhibit-reception"><?= htmlspecialchars($reception_display) ?></p>
-        <?php endif; ?>
         <?php
         $badge_class = '';
         if ($duration === 'permanent') $badge_class = 'permanent';
         elseif ($start_date && strtotime($start_date) > $now) $badge_class = 'upcoming';
         elseif ($end_date && strtotime($end_date) < $now) $badge_class = 'closed';
         elseif ($status_badge) $badge_class = 'current';
+        $has_details = $date_display || $venue || $reception_display || $status_badge;
         ?>
-        <?php if ($status_badge): ?>
-        <span class="exhibit-badge <?= $badge_class ?>"><?= htmlspecialchars($status_badge) ?></span>
-        <?php endif; ?>
-        <?php if ($description): ?>
-        <p class="exhibit-description"><?= nl2br(htmlspecialchars($description)) ?></p>
+        <?php if ($has_details): ?>
+        <div class="show-details-wrap">
+            <button class="show-details-toggle" id="show-details-toggle" onclick="toggleShowDetails()">Show details <span class="arrow">&darr;</span></button>
+            <div class="show-details" id="show-details">
+                <?php if ($date_display): ?>
+                <p class="exhibit-date-bar"><?= htmlspecialchars($date_display) ?></p>
+                <?php endif; ?>
+                <?php if ($venue): ?>
+                <p class="exhibit-venue"><?= htmlspecialchars($venue) ?></p>
+                <?php endif; ?>
+                <?php if ($has_venue_map): ?>
+                <div id="venue-map" class="venue-map"></div>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=<?= $venue_lat ?>,<?= $venue_lng ?>" target="_blank" rel="noopener" class="directions-link">Get directions &rarr;</a>
+                <?php endif; ?>
+                <?php if ($reception_display): ?>
+                <p class="exhibit-reception"><?= htmlspecialchars($reception_display) ?></p>
+                <?php endif; ?>
+                <?php if ($status_badge): ?>
+                <span class="exhibit-badge <?= $badge_class ?>"><?= htmlspecialchars($status_badge) ?></span>
+                <?php endif; ?>
+            </div>
+        </div>
         <?php endif; ?>
     </div>
 
@@ -511,12 +612,23 @@ $artwork_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_fi
         <?php
         $first_meta = $artwork_meta[$artworks[0]] ?? [];
         $first_title = $first_meta['title'] ?? pathinfo($artworks[0], PATHINFO_FILENAME);
+        $first_details = [];
+        if (!empty($first_meta['medium'])) $first_details[] = $first_meta['medium'];
+        if (!empty($first_meta['dimensions'])) $first_details[] = $first_meta['dimensions'];
         ?>
         <p class="caption-title" id="caption-title"><?= htmlspecialchars($first_title) ?></p>
-        <p class="caption-link"><a id="caption-link" href="/art.php?f=<?= urlencode($artworks[0]) ?>&exhibit=<?= urlencode($slug) ?>">View full detail</a></p>
+        <p class="caption-detail" id="caption-detail" style="font-size:0.8rem;color:var(--muted);margin-top:2px;"><?= htmlspecialchars(implode(' · ', $first_details)) ?></p>
+        <p class="caption-link"><a id="caption-link" href="/art.php?f=<?= urlencode($artworks[0]) ?>&exhibit=<?= urlencode($slug) ?>">View full detail &rarr;</a></p>
     </div>
     <?php else: ?>
     <div style="text-align:center;padding:3rem;color:var(--muted);">No artworks in this exhibit yet.</div>
+    <?php endif; ?>
+
+    <?php if ($description): ?>
+    <div class="exhibit-about" id="exhibit-about">
+        <div class="exhibit-about-text" id="about-text"><?= nl2br(htmlspecialchars($description)) ?></div>
+        <button class="read-more-btn" id="read-more-btn" onclick="toggleAbout()">Read more &darr;</button>
+    </div>
     <?php endif; ?>
 
     <?php if ($press_release): ?>
@@ -551,6 +663,13 @@ $artwork_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_fi
         $m = $artwork_meta[$f] ?? [];
         return $m['title'] ?? pathinfo($f, PATHINFO_FILENAME);
     }, $artworks)) ?>;
+    var artworkDetails = <?= json_encode(array_map(function($f) use ($artwork_meta) {
+        $m = $artwork_meta[$f] ?? [];
+        $parts = [];
+        if (!empty($m['medium'])) $parts[] = $m['medium'];
+        if (!empty($m['dimensions'])) $parts[] = $m['dimensions'];
+        return implode(' · ', $parts);
+    }, $artworks)) ?>;
     var slug = <?= json_encode($slug) ?>;
     var currentIndex = 0;
     var total = artworks.length;
@@ -571,6 +690,7 @@ $artwork_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_fi
 
         document.getElementById('counter-current').textContent = idx + 1;
         document.getElementById('caption-title').textContent = artworkTitles[idx];
+        document.getElementById('caption-detail').textContent = artworkDetails[idx];
         document.getElementById('caption-link').href = '/art.php?f=' + encodeURIComponent(artworks[idx]) + '&exhibit=' + encodeURIComponent(slug);
 
         // Update thumbs
@@ -603,12 +723,15 @@ $artwork_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_fi
         }, { passive: true });
     }
 
-    // Click image to view detail
+    // Click image: left half = prev, right half = next
     var mainImg = document.getElementById('carousel-img');
     if (mainImg) {
-        mainImg.addEventListener('click', function() {
-            window.location.href = '/art.php?f=' + encodeURIComponent(artworks[currentIndex]) + '&exhibit=' + encodeURIComponent(slug);
+        mainImg.addEventListener('click', function(e) {
+            var rect = mainImg.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            carousel(x < rect.width / 2 ? -1 : 1);
         });
+        mainImg.style.cursor = 'pointer';
     }
 
     // Share functions
@@ -630,6 +753,77 @@ $artwork_meta = file_exists($meta_file) ? json_decode(file_get_contents($meta_fi
     }
     function copyLink() {
         navigator.clipboard.writeText(exhibitUrl).then(function() { showToast('Link copied!'); });
+    }
+
+    // Auto-expand show details for dated (non-permanent) exhibits
+    <?php if ($duration !== 'permanent' && $has_details): ?>
+    (function() {
+        var details = document.getElementById('show-details');
+        var btn = document.getElementById('show-details-toggle');
+        if (details && btn) {
+            details.classList.add('expanded');
+            btn.classList.add('open');
+            btn.innerHTML = 'Hide details <span class="arrow">&darr;</span>';
+            if (typeof initVenueMap === 'function') setTimeout(initVenueMap, 300);
+        }
+    })();
+    <?php endif; ?>
+
+    // Show details toggle
+    function toggleShowDetails() {
+        var details = document.getElementById('show-details');
+        var btn = document.getElementById('show-details-toggle');
+        if (details.classList.contains('expanded')) {
+            details.classList.remove('expanded');
+            btn.classList.remove('open');
+            btn.innerHTML = 'Show details <span class="arrow">&darr;</span>';
+        } else {
+            details.classList.add('expanded');
+            btn.classList.add('open');
+            btn.innerHTML = 'Hide details <span class="arrow">&darr;</span>';
+            initVenueMap();
+        }
+    }
+
+    // Venue map (read-only)
+    var venueMap = null;
+    function initVenueMap() {
+        if (venueMap) { venueMap.invalidateSize(); return; }
+        var el = document.getElementById('venue-map');
+        if (!el || typeof L === 'undefined') return;
+        var lat = <?= json_encode($venue_lat) ?>;
+        var lng = <?= json_encode($venue_lng) ?>;
+        if (!lat || !lng) return;
+        venueMap = L.map('venue-map', { scrollWheelZoom: false }).setView([lat, lng], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(venueMap);
+        L.marker([lat, lng]).addTo(venueMap);
+    }
+
+    // Read more toggle for description
+    (function() {
+        var aboutText = document.getElementById('about-text');
+        var btn = document.getElementById('read-more-btn');
+        if (!aboutText || !btn) return;
+        // Check if text overflows the collapsed height (4.2em ≈ ~2.5 lines)
+        requestAnimationFrame(function() {
+            if (aboutText.scrollHeight > aboutText.clientHeight + 2) {
+                btn.style.display = 'inline-block';
+            }
+        });
+    })();
+
+    function toggleAbout() {
+        var aboutText = document.getElementById('about-text');
+        var btn = document.getElementById('read-more-btn');
+        if (aboutText.classList.contains('expanded')) {
+            aboutText.classList.remove('expanded');
+            btn.innerHTML = 'Read more &darr;';
+        } else {
+            aboutText.classList.add('expanded');
+            btn.innerHTML = 'Read less &uarr;';
+        }
     }
     </script>
 </body>

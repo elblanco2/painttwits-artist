@@ -42,6 +42,8 @@ $upgrade_cancelled = isset($_GET['cancelled']) && $_GET['cancelled'] == '1';
 $max_subdomains = 1;
 $is_paid_multi = false;
 $subdomain_count = 1;
+$custom_domain = null;
+$domain_purchase = null;
 
 if (!empty($central_api) && !empty($api_key)) {
     // Try to get account status from central API
@@ -61,6 +63,8 @@ if (!empty($central_api) && !empty($api_key)) {
             $max_subdomains = intval($status['max_subdomains']);
             $is_paid_multi = !empty($status['is_paid_multi']);
             $subdomain_count = intval($status['subdomain_count'] ?? 1);
+            $custom_domain = $status['custom_domain'] ?? null;
+            $domain_purchase = $status['domain_purchase'] ?? null;
         }
     }
 }
@@ -538,6 +542,23 @@ function deleteDirectory($dir) {
             </p>
         </div>
 
+        <!-- Custom Domain -->
+        <?php if (!empty($custom_domain)): ?>
+        <div class="settings-section" style="background:#f0f7f0;border:1px solid #c0e0c0;border-radius:6px;padding:1rem;">
+            <h3 style="margin-top:0;font-size:1rem;">Custom Domain</h3>
+            <p style="margin:0;">Your portfolio is also available at <a href="https://<?= htmlspecialchars($custom_domain) ?>" target="_blank" style="color:#228B22;font-weight:bold;"><?= htmlspecialchars($custom_domain) ?></a></p>
+        </div>
+        <?php elseif (!empty($domain_purchase)): ?>
+        <div class="settings-section" style="background:#fffbeb;border:1px solid #f59e0b;border-radius:6px;padding:1rem;">
+            <h3 style="margin-top:0;font-size:1rem;color:#92400e;">Custom Domain — Setup in Progress</h3>
+            <p style="margin:0;font-size:0.9rem;">Your domain <strong><?= htmlspecialchars($domain_purchase['domain']) ?></strong> is being set up. We'll send you DNS instructions once it's ready.</p>
+        </div>
+        <?php elseif (!empty($central_api)): ?>
+        <div class="settings-section">
+            <p style="font-size:0.85rem;color:#666;">Want your own domain? <a href="https://painttwits.com/custom-domain" style="color:#228B22;">Learn about custom domains</a></p>
+        </div>
+        <?php endif; ?>
+
         <!-- Multi-Subdomain Info / Upgrade (only for painttwits-managed subdomain artists) -->
         <?php if (!empty($central_api) && !empty($subdomain)): ?>
         <div class="settings-section">
@@ -557,25 +578,25 @@ function deleteDirectory($dir) {
                 <?php if ($subdomain_count >= $max_subdomains): ?>
                 <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #c0d8f0;">
                     <p style="margin:0 0 0.5rem 0;color:#333;"><strong>Need more?</strong> Upgrade to unlimited subdomains.</p>
-                    <button type="button" class="btn-upgrade" id="upgrade-btn" onclick="startUpgrade()" style="background:#667eea;color:white;">
-                        Upgrade to Unlimited - $100
-                    </button>
+                    <a href="https://painttwits.com/custom-domain" class="btn-upgrade" style="background:#667eea;color:white;text-decoration:none;display:inline-block;text-align:center;">
+                        Go Pro - $50
+                    </a>
                 </div>
                 <?php endif; ?>
             </div>
             <?php else: ?>
             <div class="upgrade-box">
-                <h2>Want Unlimited Galleries?</h2>
-                <p>All artists get 3 subdomains free. Upgrade for unlimited.</p>
+                <h2>Go Pro</h2>
+                <p>Unlimited subdomains + your own custom domain. One-time payment, lifetime access.</p>
                 <ul>
-                    <li>Perfect for different art styles or collections</li>
-                    <li>Separate portfolios for commissions vs personal work</li>
-                    <li>One-time payment, lifetime access</li>
+                    <li>Unlimited galleries for different styles or collections</li>
+                    <li>Use your own domain (yourdomain.com)</li>
+                    <li>SSL, DNS setup &amp; redirect all included</li>
                 </ul>
-                <div class="price-tag">$100</div>
-                <button type="button" class="btn-upgrade" id="upgrade-btn" onclick="startUpgrade()">
-                    Upgrade Now
-                </button>
+                <div class="price-tag">$50</div>
+                <a href="https://painttwits.com/custom-domain" class="btn-upgrade" style="text-decoration:none;display:inline-block;text-align:center;">
+                    Go Pro
+                </a>
             </div>
             <?php endif; ?>
 
@@ -773,6 +794,14 @@ function deleteDirectory($dir) {
                     </div>
                 </div>
 
+                <div id="exhibit-venue-map-section" style="margin-bottom:1rem;display:none;">
+                    <span style="font-size:0.85rem;color:#666;cursor:pointer;text-decoration:underline;" onclick="toggleExhibitVenueMap();" id="exhibit-venue-map-toggle">Pin venue on map</span>
+                    <div id="exhibit-venue-map" style="height:200px;margin-top:0.5rem;border-radius:4px;display:none;"></div>
+                    <input type="hidden" id="exhibit-venue-lat">
+                    <input type="hidden" id="exhibit-venue-lng">
+                    <p id="exhibit-venue-coords" style="font-size:0.8rem;color:#888;margin-top:0.25rem;display:none;"></p>
+                </div>
+
                 <div style="margin-bottom:1rem;">
                     <label style="display:block;font-size:0.85rem;margin-bottom:0.25rem;">Press Release</label>
                     <textarea id="exhibit-press" rows="3" style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:4px;font-family:inherit;resize:vertical;" placeholder="Optional press release text..."></textarea>
@@ -787,7 +816,7 @@ function deleteDirectory($dir) {
                 </div>
 
                 <div style="margin-bottom:1rem;">
-                    <label style="display:block;font-size:0.85rem;margin-bottom:0.5rem;">Select Artworks (click to toggle)</label>
+                    <label style="display:block;font-size:0.85rem;margin-bottom:0.5rem;">Select Artworks (click to toggle) <span id="artwork-count" style="color:#888;"></span></label>
                     <div id="exhibit-artwork-picker" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;max-height:300px;overflow-y:auto;padding:4px;border:1px solid #eee;border-radius:4px;">
                         <p style="color:#999;grid-column:1/-1;">Loading artworks...</p>
                     </div>
@@ -892,44 +921,6 @@ function deleteDirectory($dir) {
             });
         });
 
-        // Stripe upgrade
-        function startUpgrade() {
-            var btn = document.getElementById('upgrade-btn');
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = 'Redirecting...';
-            }
-
-            fetch('<?= rtrim($central_api, "/") ?>/purchase-multi.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    artist_email: '<?= addslashes($artist_email) ?>',
-                    artist_id: '<?= addslashes($config['artist_id'] ?? '') ?>',
-                    subdomain: '<?= addslashes($subdomain) ?>'
-                })
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(res) {
-                if (res.url) {
-                    window.location.href = res.url;
-                } else {
-                    alert(res.error || 'Failed to start checkout');
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.textContent = 'Upgrade Now';
-                    }
-                }
-            })
-            .catch(function(err) {
-                alert('Error: ' + err.message);
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = 'Upgrade Now';
-                }
-            });
-        }
-
         // Create new subdomain
         function createSubdomain() {
             var input = document.getElementById('new-subdomain');
@@ -976,7 +967,7 @@ function deleteDirectory($dir) {
                 } else {
                     resultDiv.innerHTML = '<div style="background:#ffebee;color:#c00;padding:1rem;border-radius:4px;">' +
                         '<strong>Error:</strong> ' + (res.error || 'Failed to create subdomain') +
-                        (res.can_upgrade ? '<br><br><button onclick="startUpgrade()" style="background:#667eea;color:white;border:none;padding:0.5rem 1rem;cursor:pointer;border-radius:4px;">Upgrade to Unlimited - $100</button>' : '') +
+                        (res.can_upgrade ? '<br><br><a href="https://painttwits.com/custom-domain" style="display:inline-block;background:#667eea;color:white;padding:0.5rem 1rem;border-radius:4px;text-decoration:none;">Go Pro - $50</a>' : '') +
                         '</div>';
                     btn.disabled = false;
                     btn.textContent = 'Create Subdomain';
@@ -1196,8 +1187,13 @@ function deleteDirectory($dir) {
                 var ex = allExhibits[slug];
                 var count = (ex.artworks || []).length;
                 var badge = ex.status === 'published' ? '<span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:3px;font-size:0.75rem;">published</span>' : '<span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:3px;font-size:0.75rem;">draft</span>';
+                var cover = (ex.artworks && ex.artworks.length) ? ex.artworks[0] : null;
+                var thumbHtml = cover
+                    ? '<img src="/uploads/' + encodeURIComponent(cover) + '" style="width:40px;height:40px;object-fit:cover;border-radius:3px;flex-shrink:0;" alt="">'
+                    : '<div style="width:40px;height:40px;background:#f0f0f0;border-radius:3px;flex-shrink:0;"></div>';
+                var dotColor = ex.status === 'published' ? '#22c55e' : '#aaa';
                 html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;border:1px solid #ddd;border-radius:4px;margin-bottom:0.5rem;">';
-                html += '<div><strong>' + escHtml(ex.title || 'Untitled') + '</strong> ' + badge + '<br><span style="font-size:0.8rem;color:#666;">' + count + ' work' + (count !== 1 ? 's' : '') + (ex.duration === 'permanent' ? ' · permanent' : '') + '</span></div>';
+                html += '<div style="display:flex;align-items:center;gap:0.75rem;">' + thumbHtml + '<div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + dotColor + ';margin-right:6px;vertical-align:middle;"></span><strong>' + escHtml(ex.title || 'Untitled') + '</strong> ' + badge + '<br><span style="font-size:0.8rem;color:#666;">' + count + ' work' + (count !== 1 ? 's' : '') + (ex.duration === 'permanent' ? ' · permanent' : '') + '</span></div></div>';
                 html += '<div style="display:flex;gap:0.5rem;">';
                 html += '<button onclick="editExhibit(\'' + slug + '\')" style="padding:4px 10px;border:1px solid #ccc;background:white;border-radius:4px;cursor:pointer;font-size:0.8rem;">edit</button>';
                 html += '<a href="/exhibit/' + slug + '" target="_blank" style="padding:4px 10px;border:1px solid #ccc;background:white;border-radius:4px;font-size:0.8rem;text-decoration:none;color:inherit;">view</a>';
@@ -1278,11 +1274,58 @@ function deleteDirectory($dir) {
                 el.style.borderColor = '#228B22';
                 check.style.display = 'block';
             }
+            var countEl = document.getElementById('artwork-count');
+            if (countEl) countEl.textContent = selectedArtworks.length ? selectedArtworks.length + ' selected' : '';
         }
 
         function toggleDateFields() {
             var dur = document.getElementById('exhibit-duration').value;
             document.getElementById('date-fields').style.display = dur === 'permanent' ? 'none' : 'block';
+            document.getElementById('exhibit-venue-map-section').style.display = dur === 'permanent' ? 'none' : 'block';
+        }
+
+        // Exhibit venue map picker
+        var exhibitVenueMap = null;
+        var exhibitVenueMarker = null;
+
+        function initExhibitVenueMap() {
+            if (exhibitVenueMap) {
+                exhibitVenueMap.invalidateSize();
+                return;
+            }
+            if (typeof L === 'undefined') return;
+            exhibitVenueMap = L.map('exhibit-venue-map').setView([39.8, -98.5], 4);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(exhibitVenueMap);
+            exhibitVenueMap.on('click', function(e) {
+                setExhibitVenueMarker(e.latlng.lat, e.latlng.lng);
+            });
+        }
+
+        function setExhibitVenueMarker(lat, lng) {
+            if (!exhibitVenueMap) initExhibitVenueMap();
+            if (exhibitVenueMarker) {
+                exhibitVenueMarker.setLatLng([lat, lng]);
+            } else if (exhibitVenueMap) {
+                exhibitVenueMarker = L.marker([lat, lng]).addTo(exhibitVenueMap);
+            }
+            document.getElementById('exhibit-venue-lat').value = lat;
+            document.getElementById('exhibit-venue-lng').value = lng;
+            var coords = document.getElementById('exhibit-venue-coords');
+            coords.textContent = 'Venue pin: ' + parseFloat(lat).toFixed(4) + ', ' + parseFloat(lng).toFixed(4);
+            coords.style.display = 'block';
+            if (exhibitVenueMap) exhibitVenueMap.setView([lat, lng], 14);
+        }
+
+        function toggleExhibitVenueMap() {
+            var mapDiv = document.getElementById('exhibit-venue-map');
+            if (mapDiv.style.display === 'none') {
+                mapDiv.style.display = 'block';
+                initExhibitVenueMap();
+            } else {
+                mapDiv.style.display = 'none';
+            }
         }
 
         function showExhibitForm(slug) {
@@ -1296,6 +1339,11 @@ function deleteDirectory($dir) {
             document.getElementById('exhibit-start').value = '';
             document.getElementById('exhibit-end').value = '';
             document.getElementById('exhibit-venue').value = '';
+            document.getElementById('exhibit-venue-lat').value = '';
+            document.getElementById('exhibit-venue-lng').value = '';
+            document.getElementById('exhibit-venue-coords').style.display = 'none';
+            document.getElementById('exhibit-venue-map').style.display = 'none';
+            if (exhibitVenueMarker) { exhibitVenueMap.removeLayer(exhibitVenueMarker); exhibitVenueMarker = null; }
             document.getElementById('exhibit-reception').value = '';
             document.getElementById('exhibit-press').value = '';
             document.getElementById('exhibit-status').value = 'draft';
@@ -1304,6 +1352,8 @@ function deleteDirectory($dir) {
                 el.style.borderColor = 'transparent';
                 el.querySelector('.picker-check').style.display = 'none';
             });
+            var countEl = document.getElementById('artwork-count');
+            if (countEl) countEl.textContent = '';
             toggleDateFields();
             document.getElementById('exhibit-form-result').innerHTML = '';
             form.scrollIntoView({ behavior: 'smooth' });
@@ -1320,6 +1370,13 @@ function deleteDirectory($dir) {
             document.getElementById('exhibit-start').value = ex.start_date || '';
             document.getElementById('exhibit-end').value = ex.end_date || '';
             document.getElementById('exhibit-venue').value = ex.venue || '';
+            document.getElementById('exhibit-venue-lat').value = ex.venue_lat || '';
+            document.getElementById('exhibit-venue-lng').value = ex.venue_lng || '';
+            if (ex.venue_lat && ex.venue_lng) {
+                setExhibitVenueMarker(ex.venue_lat, ex.venue_lng);
+                document.getElementById('exhibit-venue-map').style.display = 'block';
+                initExhibitVenueMap();
+            }
             document.getElementById('exhibit-reception').value = ex.opening_reception || '';
             document.getElementById('exhibit-press').value = ex.press_release || '';
             document.getElementById('exhibit-status').value = ex.status || 'draft';
@@ -1333,6 +1390,8 @@ function deleteDirectory($dir) {
                 }
             });
             toggleDateFields();
+            var countEl = document.getElementById('artwork-count');
+            if (countEl) countEl.textContent = selectedArtworks.length ? selectedArtworks.length + ' selected' : '';
         }
 
         function hideExhibitForm() {
@@ -1342,7 +1401,30 @@ function deleteDirectory($dir) {
         function saveExhibit() {
             var slug = document.getElementById('exhibit-slug').value;
             var title = document.getElementById('exhibit-title').value.trim();
-            if (!title) { alert('Title is required'); return; }
+            var resultDiv = document.getElementById('exhibit-form-result');
+            var errors = [];
+
+            // Validate title
+            if (!title) errors.push('Title is required');
+
+            // Validate dates
+            var duration = document.getElementById('exhibit-duration').value;
+            var startDate = document.getElementById('exhibit-start').value;
+            var endDate = document.getElementById('exhibit-end').value;
+            var reception = document.getElementById('exhibit-reception').value;
+            if (duration === 'temporary') {
+                if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+                    errors.push('End date must be after start date');
+                }
+                if (reception && startDate && new Date(reception) < new Date(startDate)) {
+                    errors.push('Reception date must be on or after start date');
+                }
+            }
+
+            if (errors.length > 0) {
+                resultDiv.innerHTML = '<span style="color:#c00;">' + errors.join('<br>') + '</span>';
+                return;
+            }
 
             // Check for manual artworks input (fallback)
             var manualInput = document.getElementById('exhibit-artworks-manual');
@@ -1359,6 +1441,8 @@ function deleteDirectory($dir) {
                 start_date: document.getElementById('exhibit-start').value || null,
                 end_date: document.getElementById('exhibit-end').value || null,
                 venue: document.getElementById('exhibit-venue').value,
+                venue_lat: document.getElementById('exhibit-venue-lat').value || null,
+                venue_lng: document.getElementById('exhibit-venue-lng').value || null,
                 opening_reception: document.getElementById('exhibit-reception').value || null,
                 press_release: document.getElementById('exhibit-press').value,
                 status: document.getElementById('exhibit-status').value,
@@ -1367,7 +1451,6 @@ function deleteDirectory($dir) {
             };
             if (slug) data.slug = slug;
 
-            var resultDiv = document.getElementById('exhibit-form-result');
             resultDiv.innerHTML = '<span style="color:#666;">Saving...</span>';
 
             exhibitApi(data).then(function(res) {

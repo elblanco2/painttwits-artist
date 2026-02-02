@@ -149,7 +149,7 @@ if (empty($artworks)) {
     foreach (glob($uploads_dir . '*.{jpg,jpeg,png,gif,webp}', GLOB_BRACE) as $file) {
         $basename = basename($file);
         // Skip resized versions
-        if (preg_match('/_(?:large|medium|small|social)\.[a-z]+$/i', $basename)) {
+        if (preg_match('/_(?:large|medium|small|social|map)\.[a-z]+$/i', $basename)) {
             continue;
         }
         $artworks[] = $basename;

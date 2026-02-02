@@ -116,7 +116,7 @@ if (empty($artworks)) {
     $exhibit_slug = '';
     foreach (glob($uploads_dir . '*.{jpg,jpeg,png,gif,webp}', GLOB_BRACE) as $file) {
         $bn = basename($file);
-        if (preg_match('/_(?:large|medium|small|social)\.[a-z]+$/i', $bn)) continue;
+        if (preg_match('/_(?:large|medium|small|social|map)\.[a-z]+$/i', $bn)) continue;
         $artworks[] = $bn;
     }
 }

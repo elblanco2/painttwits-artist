@@ -287,6 +287,92 @@ $shared_artwork = isset($_GET['art']) ? $_GET['art'] : null;
             <?php endif; ?>
 
             <?php else: ?>
+
+            <?php if ($has_exhibits): ?>
+            <section id="exhibits" class="section">
+                <h2>exhibits</h2>
+                <?php
+                function renderExhibitCards($exhibits, $uploads_dir) {
+                    foreach ($exhibits as $slug => $ex) {
+                        $cover = $ex['cover'] ?? ($ex['artworks'][0] ?? '');
+                        $count = count($ex['artworks'] ?? []);
+                        $pi = $cover ? pathinfo($cover) : null;
+                        $thumb = '';
+                        if ($pi && file_exists($uploads_dir . '/' . $pi['filename'] . '_small.' . $pi['extension'])) {
+                            $thumb = $pi['filename'] . '_small.' . $pi['extension'];
+                        } elseif ($cover && file_exists($uploads_dir . '/' . $cover)) {
+                            $thumb = $cover;
+                        }
+                        $badge = '';
+                        $badge_class = '';
+                        $now = time();
+                        if (($ex['duration'] ?? '') === 'permanent') {
+                            $badge = 'Permanent';
+                            $badge_class = 'permanent';
+                        } elseif (!empty($ex['start_date']) && strtotime($ex['start_date']) > $now) {
+                            $badge = 'Opens ' . date('M j', strtotime($ex['start_date']));
+                            $badge_class = 'upcoming';
+                        } elseif (!empty($ex['end_date']) && strtotime($ex['end_date']) < $now) {
+                            $badge = 'Closed';
+                            $badge_class = 'closed';
+                        } elseif (!empty($ex['end_date'])) {
+                            $badge = 'Through ' . date('M j', strtotime($ex['end_date']));
+                            $badge_class = 'current';
+                        }
+                        if ($ex['status'] !== 'published') {
+                            $badge = 'Draft';
+                            $badge_class = '';
+                        }
+                        ?>
+                        <a href="/exhibit/<?= htmlspecialchars($slug) ?>" class="exhibit-card">
+                            <?php if ($thumb): ?>
+                            <div class="exhibit-card-img"><img src="/uploads/<?= htmlspecialchars($thumb) ?>" alt="<?= htmlspecialchars($ex['title'] ?? '') ?>" loading="lazy"></div>
+                            <?php else: ?>
+                            <div class="exhibit-card-empty">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                                no cover image
+                            </div>
+                            <?php endif; ?>
+                            <div class="exhibit-card-info">
+                                <span class="exhibit-card-title"><?= htmlspecialchars($ex['title'] ?? 'Untitled') ?></span>
+                                <span class="exhibit-card-meta"><?= $count ?> work<?= $count !== 1 ? 's' : '' ?><?= $badge ? ' · <span class="exhibit-badge-inline ' . $badge_class . '">' . htmlspecialchars($badge) . '</span>' : '' ?></span>
+                            </div>
+                        </a>
+                        <?php
+                    }
+                }
+                ?>
+
+                <?php if (!empty($upcoming_exhibits)): ?>
+                <h3 class="exhibit-group-label">upcoming</h3>
+                <div class="exhibits-grid">
+                    <?php renderExhibitCards($upcoming_exhibits, $uploads_dir); ?>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($current_exhibits)): ?>
+                <h3 class="exhibit-group-label">current</h3>
+                <div class="exhibits-grid">
+                    <?php renderExhibitCards($current_exhibits, $uploads_dir); ?>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($permanent_exhibits)): ?>
+                <h3 class="exhibit-group-label">permanent collection</h3>
+                <div class="exhibits-grid">
+                    <?php renderExhibitCards($permanent_exhibits, $uploads_dir); ?>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($past_exhibits)): ?>
+                <h3 class="exhibit-group-label">past</h3>
+                <div class="exhibits-grid">
+                    <?php renderExhibitCards($past_exhibits, $uploads_dir); ?>
+                </div>
+                <?php endif; ?>
+            </section>
+            <?php endif; ?>
+
             <div class="artwork-grid">
                 <?php foreach ($artworks as $art):
                     // Filter by tag if active
@@ -363,82 +449,6 @@ $shared_artwork = isset($_GET['art']) ? $_GET['art'] : null;
             <?php endif; ?>
         </section>
 
-        <?php if ($has_exhibits): ?>
-        <section id="exhibits" class="section">
-            <h2>exhibits</h2>
-            <?php
-            function renderExhibitCards($exhibits, $uploads_dir) {
-                foreach ($exhibits as $slug => $ex) {
-                    $cover = $ex['cover'] ?? ($ex['artworks'][0] ?? '');
-                    $count = count($ex['artworks'] ?? []);
-                    $pi = $cover ? pathinfo($cover) : null;
-                    $thumb = '';
-                    if ($pi && file_exists($uploads_dir . '/' . $pi['filename'] . '_small.' . $pi['extension'])) {
-                        $thumb = $pi['filename'] . '_small.' . $pi['extension'];
-                    } elseif ($cover && file_exists($uploads_dir . '/' . $cover)) {
-                        $thumb = $cover;
-                    }
-                    // Date badge
-                    $badge = '';
-                    $now = time();
-                    if (($ex['duration'] ?? '') === 'permanent') {
-                        $badge = 'Permanent';
-                    } elseif (!empty($ex['start_date']) && strtotime($ex['start_date']) > $now) {
-                        $badge = 'Opens ' . date('M j', strtotime($ex['start_date']));
-                    } elseif (!empty($ex['end_date']) && strtotime($ex['end_date']) < $now) {
-                        $badge = 'Closed';
-                    } elseif (!empty($ex['end_date'])) {
-                        $badge = 'Through ' . date('M j', strtotime($ex['end_date']));
-                    }
-                    if ($ex['status'] !== 'published') {
-                        $badge = 'Draft';
-                    }
-                    ?>
-                    <a href="/exhibit/<?= htmlspecialchars($slug) ?>" class="exhibit-card">
-                        <?php if ($thumb): ?>
-                        <img src="/uploads/<?= htmlspecialchars($thumb) ?>" alt="<?= htmlspecialchars($ex['title'] ?? '') ?>" loading="lazy">
-                        <?php else: ?>
-                        <div class="exhibit-card-empty"></div>
-                        <?php endif; ?>
-                        <div class="exhibit-card-info">
-                            <span class="exhibit-card-title"><?= htmlspecialchars($ex['title'] ?? 'Untitled') ?></span>
-                            <span class="exhibit-card-meta"><?= $count ?> work<?= $count !== 1 ? 's' : '' ?><?= $badge ? ' · ' . htmlspecialchars($badge) : '' ?></span>
-                        </div>
-                    </a>
-                    <?php
-                }
-            }
-            ?>
-
-            <?php if (!empty($upcoming_exhibits)): ?>
-            <h3 class="exhibit-group-label">upcoming</h3>
-            <div class="exhibits-grid">
-                <?php renderExhibitCards($upcoming_exhibits, $uploads_dir); ?>
-            </div>
-            <?php endif; ?>
-
-            <?php if (!empty($current_exhibits)): ?>
-            <h3 class="exhibit-group-label">current</h3>
-            <div class="exhibits-grid">
-                <?php renderExhibitCards($current_exhibits, $uploads_dir); ?>
-            </div>
-            <?php endif; ?>
-
-            <?php if (!empty($permanent_exhibits)): ?>
-            <h3 class="exhibit-group-label">permanent collection</h3>
-            <div class="exhibits-grid">
-                <?php renderExhibitCards($permanent_exhibits, $uploads_dir); ?>
-            </div>
-            <?php endif; ?>
-
-            <?php if (!empty($past_exhibits)): ?>
-            <h3 class="exhibit-group-label">past</h3>
-            <div class="exhibits-grid">
-                <?php renderExhibitCards($past_exhibits, $uploads_dir); ?>
-            </div>
-            <?php endif; ?>
-        </section>
-        <?php endif; ?>
 
         <section id="about" class="section">
             <h2>about</h2>

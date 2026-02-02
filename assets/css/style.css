@@ -715,13 +715,20 @@ footer {
     text-decoration: none;
     color: inherit;
     border: 1px solid var(--light-gray);
-    transition: border-color 0.2s, transform 0.2s;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .exhibit-card:hover {
     border-color: var(--gray);
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     text-decoration: none;
+}
+
+.exhibit-card .exhibit-card-img {
+    overflow: hidden;
 }
 
 .exhibit-card img {
@@ -729,12 +736,24 @@ footer {
     height: 160px;
     object-fit: cover;
     display: block;
+    transition: transform 0.3s ease;
+}
+
+.exhibit-card:hover img {
+    transform: scale(1.03);
 }
 
 .exhibit-card-empty {
     width: 100%;
     height: 160px;
     background: var(--light-gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--gray);
+    font-size: 0.8rem;
 }
 
 .exhibit-card-info {
@@ -745,6 +764,9 @@ footer {
     display: block;
     font-size: 0.9rem;
     margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .exhibit-card-meta {
@@ -752,6 +774,17 @@ footer {
     font-size: 0.75rem;
     color: var(--gray);
 }
+
+.exhibit-badge-inline {
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: normal;
+}
+.exhibit-badge-inline.current { background: #dcfce7; color: #166534; }
+.exhibit-badge-inline.upcoming { background: #dbeafe; color: #1e40af; }
+.exhibit-badge-inline.closed { background: #fee2e2; color: #991b1b; }
+.exhibit-badge-inline.permanent { background: #f3e8ff; color: #6b21a8; }
 
 @media (max-width: 600px) {
     .exhibits-grid {
