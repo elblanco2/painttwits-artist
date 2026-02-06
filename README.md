@@ -137,6 +137,50 @@ Delete your account from Settings > Danger Zone:
 
 ---
 
+## Software Updates
+
+### Automatic Updates (Self-Hosted)
+
+If you're running your own domain, updates are easy:
+
+1. Go to **Settings → Software Updates**
+2. System checks GitHub for new releases
+3. Click **"Update Now"** when available
+4. Automatic backup created before updating
+5. Update completes in 1-2 minutes
+
+**Features:**
+- ✅ One-click updates from GitHub releases
+- ✅ Automatic backup before each update
+- ✅ One-click rollback if needed
+- ✅ Preserves your config and artwork
+- ✅ No manual file copying
+
+### Manual Updates
+
+If automatic updates aren't available:
+
+1. **Backup first!** Download your artwork via Settings
+2. Download the [latest release](https://github.com/elblanco2/painttwits-artist/releases)
+3. Extract and upload files to your server
+4. **Keep your existing `artist_config.php`** (don't overwrite!)
+5. Verify site works
+
+**What gets preserved:**
+- `artist_config.php` - Your settings
+- `uploads/` - Your artwork
+- `logs/` - Logs
+- `backups/` - Previous backups
+
+**What gets updated:**
+- All PHP, JS, CSS files
+- Templates and layouts
+- API endpoints
+
+See [UPDATE_SYSTEM.md](UPDATE_SYSTEM.md) for detailed documentation.
+
+---
+
 ## File Structure
 
 ```
@@ -155,7 +199,10 @@ your-site/
 ├── api/
 │   ├── export.php           # Artwork ZIP export
 │   ├── location.php         # Map location save/lookup
-│   └── receive_artwork.php  # Email-to-gallery receiver
+│   ├── receive_artwork.php  # Email-to-gallery receiver
+│   ├── check_update.php     # Check for software updates
+│   ├── apply_update.php     # Apply updates
+│   └── rollback_update.php  # Rollback to previous version
 ├── assets/
 │   ├── css/
 │   │   ├── style.css
@@ -165,7 +212,9 @@ your-site/
 │       └── theme.js
 ├── uploads/                 # Your artwork
 │   └── dzi/                 # Auto-generated zoom tiles
-└── email-handler/           # Optional email upload config
+├── backups/                 # Auto-created backups (from updates)
+├── email-handler/           # Optional email upload config
+└── version.php              # Current version info (for updates)
 ```
 
 ---

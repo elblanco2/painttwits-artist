@@ -12,6 +12,9 @@ logs/
 # Deep zoom tiles
 dzi/
 
+# Backups (from update system)
+backups/*.zip
+
 # IDE
 .idea/
 .vscode/

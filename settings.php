@@ -559,6 +559,187 @@ function deleteDirectory($dir) {
         </div>
         <?php endif; ?>
 
+        <!-- Software Updates (only for self-hosted installations) -->
+        <?php if (empty($subdomain)): ?>
+        <div class="settings-section">
+            <h2>Software Updates</h2>
+
+            <div id="update-status" style="padding:1rem;background:#f9f9f9;border-radius:6px;margin-bottom:1rem;">
+                <p style="margin:0;color:#666;">Checking for updates...</p>
+            </div>
+
+            <div id="update-available" style="display:none;padding:1.5rem;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;margin-bottom:1rem;">
+                <h3 style="margin:0 0 0.5rem 0;color:#2e7d32;">Update Available: <span id="update-version"></span></h3>
+                <div id="release-notes" style="margin:1rem 0;padding:1rem;background:white;border-radius:4px;font-size:0.9rem;max-height:200px;overflow-y:auto;"></div>
+                <button id="update-now-btn" onclick="applyUpdate()" style="padding:0.6rem 1.2rem;background:#4caf50;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1rem;font-weight:500;">
+                    Update Now
+                </button>
+                <p style="margin:0.75rem 0 0 0;font-size:0.85rem;color:#666;">
+                    Automatic backup will be created before updating. Takes 1-2 minutes.
+                </p>
+            </div>
+
+            <div id="update-progress" style="display:none;padding:1.5rem;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;margin-bottom:1rem;">
+                <h3 style="margin:0 0 1rem 0;color:#856404;">Updating...</h3>
+                <div id="progress-bar" style="width:100%;height:8px;background:#fff;border-radius:4px;overflow:hidden;margin-bottom:1rem;">
+                    <div id="progress-fill" style="width:0%;height:100%;background:#ffc107;transition:width 0.3s;"></div>
+                </div>
+                <div id="update-log" style="font-family:monospace;font-size:0.85rem;color:#333;max-height:200px;overflow-y:auto;"></div>
+            </div>
+
+            <div id="update-success" style="display:none;padding:1.5rem;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;margin-bottom:1rem;">
+                <h3 style="margin:0 0 0.5rem 0;color:#2e7d32;">✓ Update Successful!</h3>
+                <p style="margin:0 0 1rem 0;color:#333;">Your gallery has been updated to version <span id="success-version"></span>.</p>
+                <button onclick="location.reload()" style="padding:0.6rem 1.2rem;background:#4caf50;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1rem;">
+                    Refresh Page
+                </button>
+            </div>
+
+            <div id="update-error" style="display:none;padding:1.5rem;background:#ffebee;border:1px solid #f44336;border-radius:6px;margin-bottom:1rem;">
+                <h3 style="margin:0 0 0.5rem 0;color:#c62828;">Update Failed</h3>
+                <p id="error-message" style="margin:0 0 1rem 0;color:#333;"></p>
+                <button id="rollback-btn" onclick="rollbackUpdate()" style="padding:0.6rem 1.2rem;background:#f44336;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1rem;margin-right:0.5rem;">
+                    Rollback to Previous Version
+                </button>
+                <button onclick="location.reload()" style="padding:0.6rem 1.2rem;background:#666;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1rem;">
+                    Dismiss
+                </button>
+            </div>
+        </div>
+
+        <script>
+        // Check for updates on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkForUpdates();
+        });
+
+        function checkForUpdates() {
+            fetch('/api/check_update.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.update_available) {
+                            // Show update available
+                            document.getElementById('update-status').style.display = 'none';
+                            document.getElementById('update-available').style.display = 'block';
+                            document.getElementById('update-version').textContent = data.latest_version;
+
+                            // Parse and display release notes
+                            const releaseNotes = data.release_notes || 'No release notes available.';
+                            // Simple markdown parsing (just handle ## headers and bullet points)
+                            let html = releaseNotes
+                                .replace(/^## (.+)$/gm, '<strong>$1</strong>')
+                                .replace(/^- (.+)$/gm, '• $1')
+                                .replace(/\n/g, '<br>');
+                            document.getElementById('release-notes').innerHTML = html;
+
+                            // Store download URL for later
+                            window.updateDownloadUrl = data.download_url;
+                        } else {
+                            // Up to date
+                            document.getElementById('update-status').innerHTML =
+                                '<p style="margin:0;color:#4caf50;font-weight:500;">✓ Your gallery is up to date (v' + data.current_version + ')</p>';
+                        }
+                    } else {
+                        document.getElementById('update-status').innerHTML =
+                            '<p style="margin:0;color:#f44336;">Failed to check for updates: ' + (data.error || 'Unknown error') + '</p>';
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('update-status').innerHTML =
+                        '<p style="margin:0;color:#f44336;">Error checking for updates: ' + err.message + '</p>';
+                });
+        }
+
+        function applyUpdate() {
+            if (!window.updateDownloadUrl) {
+                alert('Download URL not available');
+                return;
+            }
+
+            // Show progress UI
+            document.getElementById('update-available').style.display = 'none';
+            document.getElementById('update-progress').style.display = 'block';
+
+            const progressFill = document.getElementById('progress-fill');
+            const updateLog = document.getElementById('update-log');
+
+            // Simulate progress
+            progressFill.style.width = '20%';
+            updateLog.innerHTML = 'Starting update...<br>';
+
+            // Make update request
+            fetch('/api/apply_update.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({download_url: window.updateDownloadUrl})
+            })
+            .then(response => response.json())
+            .then(data => {
+                progressFill.style.width = '100%';
+
+                if (data.success) {
+                    // Show success
+                    updateLog.innerHTML += data.steps.join('<br>') + '<br>';
+                    setTimeout(() => {
+                        document.getElementById('update-progress').style.display = 'none';
+                        document.getElementById('update-success').style.display = 'block';
+                        document.getElementById('success-version').textContent = data.new_version;
+                    }, 500);
+                } else {
+                    // Show error
+                    updateLog.innerHTML += 'ERROR: ' + data.error + '<br>';
+                    if (data.steps) {
+                        updateLog.innerHTML += data.steps.join('<br>');
+                    }
+                    setTimeout(() => {
+                        document.getElementById('update-progress').style.display = 'none';
+                        document.getElementById('update-error').style.display = 'block';
+                        document.getElementById('error-message').textContent = data.error;
+                    }, 500);
+                }
+            })
+            .catch(err => {
+                progressFill.style.width = '100%';
+                progressFill.style.background = '#f44336';
+                updateLog.innerHTML += 'ERROR: ' + err.message + '<br>';
+                setTimeout(() => {
+                    document.getElementById('update-progress').style.display = 'none';
+                    document.getElementById('update-error').style.display = 'block';
+                    document.getElementById('error-message').textContent = 'Network error: ' + err.message;
+                }, 500);
+            });
+        }
+
+        function rollbackUpdate() {
+            if (!confirm('This will restore your gallery to the previous version. Continue?')) {
+                return;
+            }
+
+            document.getElementById('rollback-btn').disabled = true;
+            document.getElementById('rollback-btn').textContent = 'Rolling back...';
+
+            fetch('/api/rollback_update.php', {method: 'POST'})
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Rollback successful! Gallery restored to v' + data.restored_version);
+                        location.reload();
+                    } else {
+                        alert('Rollback failed: ' + data.error);
+                        document.getElementById('rollback-btn').disabled = false;
+                        document.getElementById('rollback-btn').textContent = 'Rollback to Previous Version';
+                    }
+                })
+                .catch(err => {
+                    alert('Rollback error: ' + err.message);
+                    document.getElementById('rollback-btn').disabled = false;
+                    document.getElementById('rollback-btn').textContent = 'Rollback to Previous Version';
+                });
+        }
+        </script>
+        <?php endif; ?>
+
         <!-- Multi-Subdomain Info / Upgrade (only for painttwits-managed subdomain artists) -->
         <?php if (!empty($central_api) && !empty($subdomain)): ?>
         <div class="settings-section">
