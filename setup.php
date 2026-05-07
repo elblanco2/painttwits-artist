@@ -61,6 +61,15 @@ function handleSetup() {
     $bio = trim($input['bio'] ?? '');
     $site_title = trim($input['site_title'] ?? '') ?: $name . "'s Gallery";
     $join_network = !empty($input['join_network']);
+    $tos_accepted = !empty($input['tos_accepted']);
+
+    if ($join_network && !$tos_accepted) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'You must accept the Painttwits federation Terms of Service to join the ecosystem.',
+        ]);
+        return;
+    }
 
     if (empty($name)) {
         echo json_encode(['success' => false, 'error' => 'Name is required']);
@@ -113,7 +122,7 @@ function handleSetup() {
     $registration_token = null;
 
     if ($join_network) {
-        $result = initiateNetworkRegistration($email, $site_url, $name);
+        $result = initiateNetworkRegistration($email, $site_url, $name, $tos_accepted);
         if ($result['success']) {
             $registration_pending = true;
             $registration_token = $result['token'] ?? null;
@@ -163,13 +172,14 @@ function handleSetup() {
 /**
  * Initiate registration with painttwits.com network
  */
-function initiateNetworkRegistration($email, $site_url, $name) {
+function initiateNetworkRegistration($email, $site_url, $name, $tos_accepted = false) {
     $registration_url = 'https://painttwits.com/api/artist/register.php';
 
     $payload = [
         'email' => $email,
         'site_url' => $site_url,
         'artist_name' => $name,
+        'tos_accepted' => $tos_accepted ? true : false,
         'action' => 'initiate',
     ];
 
@@ -703,10 +713,34 @@ function varExportPretty($var, $indent = '') {
                         <input type="checkbox" id="join_network">
                         <div class="checkbox-label">
                             <strong>Join the painttwits network</strong>
-                            <small>Get discovered by collectors. Your gallery will be listed in the painttwits artist directory and you'll get access to shared features like OAuth login and video intros. You keep your own domain.</small>
+                            <small>Your gallery appears in the painttwits.com discovery feed alongside other artists. You keep your own domain — painttwits just indexes and links to your work. After a brief admin review, your gallery becomes visible to collectors browsing painttwits.</small>
                         </div>
                     </div>
                 </div>
+
+                <div class="form-group" id="tos-group" style="display:none;">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="tos_accepted">
+                        <div class="checkbox-label">
+                            <strong>I accept the painttwits federation Terms of Service</strong>
+                            <small style="display:block;margin-top:8px;">By checking this, I confirm:
+                                (1) I own all rights to artwork I submit, or have permission to display it;
+                                (2) my artwork doesn't infringe copyright or violate the painttwits content policy;
+                                (3) painttwits may include my work in its discovery feed and link to my gallery;
+                                (4) painttwits may suspend my inclusion at any time, with or without cause;
+                                (5) I'm responsible for keeping my gallery online;
+                                (6) I'll respond to DMCA / takedown requests forwarded by painttwits within 7 days.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                document.getElementById('join_network').addEventListener('change', function() {
+                    document.getElementById('tos-group').style.display = this.checked ? 'block' : 'none';
+                    if (!this.checked) document.getElementById('tos_accepted').checked = false;
+                });
+                </script>
 
                 <button class="btn btn-primary" onclick="nextStep(2)">Continue</button>
                 <button class="btn btn-secondary" onclick="prevStep(2)">Back</button>
@@ -809,6 +843,12 @@ function varExportPretty($var, $indent = '') {
                 formData.site_title = document.getElementById('site_title').value.trim();
                 formData.bio = document.getElementById('bio').value.trim();
                 formData.join_network = document.getElementById('join_network').checked;
+                formData.tos_accepted = document.getElementById('tos_accepted').checked;
+
+                if (formData.join_network && !formData.tos_accepted) {
+                    showError(2, 'You must accept the Terms of Service to join the painttwits network.');
+                    return;
+                }
 
                 document.getElementById('step-2').classList.remove('active');
                 document.getElementById('step-3').classList.add('active');
